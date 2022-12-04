@@ -1,0 +1,43 @@
+version: '3.2'
+
+services:
+
+  mongo:
+    image: mongo
+    hostname: ${MONGO_HOSTNAME}
+    privileged: true
+    volumes:
+      - mongo-data:/data/db
+      - type: bind
+        source: ./src/mongo/mongod.conf
+        target: /etc/mongod.conf
+    expose:
+      - "27017"
+    command: [ "-f",  "/etc/mongod.conf" ]
+    env_file:
+      - .env
+    networks:
+      - network
+
+  golang:
+    image: golang:1.19
+    hostname: ${APP_HOSTNAME}
+    privileged: true
+    working_dir: /code
+    volumes:
+      - ./src/go:/code
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+    expose:
+      - "${APP_PORT}"
+    entrypoint: [ "go", "run", "main.go" ]
+    env_file:
+      - .env
+    networks:
+      - network
+
+networks:
+  network:
+
+volumes:
+  mongo-data:

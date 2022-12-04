@@ -1,0 +1,38 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  GREETING: Hello, World!
+
+tasks:
+  default:
+    cmds:
+      - task -a
+    desc: "List all tasks"
+    silent: true
+  up:
+    cmds:
+      - docker-compose up -d
+    desc: "Bring up all services"
+    silent: true
+  down:
+    cmds:
+      - docker-compose down
+    desc: "Bring down all services"
+    silent: true
+  restart:
+    cmds:
+      - docker-compose restart golang
+    desc: "Restart golang service"
+    silent: true
+  logs:
+    cmds:
+      - docker-compose logs -f golang
+    desc: "Show golang service logs"
+    silent: true
+  purge:
+    cmds:
+      - docker-compose down -v rmi --all
+    desc: "Bring down all services and remove volumes and images"
+    silent: true
