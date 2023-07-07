@@ -4,30 +4,38 @@ import (
 	"fmt"
 	"log"
 
+	"mongo-test/api"
+	"mongo-test/controllers"
+	"mongo-test/db"
+
 	"github.com/caarlos0/env"
 	"github.com/gin-gonic/gin"
-	"mongo-test/routes"
 )
 
-type config struct {
+type AppEnv struct {
 	// Port is the port number to listen on
-	Port string `env:"APP_PORT" envDefault:"8888"`
+	Port       string `env:"APP_PORT" envDefault:"8888"`
 	DBHostname string `env:"MONGO_HOSTNAME,required"`
 	DBUsername string `env:"MONGO_INITDB_ROOT_USERNAME,required"`
 	DBPassword string `env:"MONGO_INITDB_ROOT_PASSWORD,required"`
-	DBName string `env:"MONGO_INITDB_DATABASE,required"`
+	DBName     string `env:"MONGO_INITDB_DATABASE,required"`
 }
 
 func main() {
 	// ENV parsing
-	cfg := config{}
-	err := env.Parse(&cfg)
+	appEnv := AppEnv{}
+	err := env.Parse(&appEnv)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// DB connection
-	
+	clientUri := fmt.Sprintf("mongodb://%s:%s@%s:27017", appEnv.DBUsername, appEnv.DBPassword, appEnv.DBHostname)
+	client, err := db.GetClient(clientUri)
+	if err != nil {
+		log.Fatal(err)
+	}
+	db := client.Database(appEnv.DBName)
 
 	// Creates a router without any middleware by default
 	r := gin.New()
@@ -45,10 +53,13 @@ func main() {
 		c.JSON(404, gin.H{"code": "PAGE_NOT_FOUND", "message": "Page not found"})
 	})
 
-	// V1 group
+	// V1 API
 	v1 := r.Group("/api/v1")
-	v1.GET("/ping", routes.Pong)
+	server := controllers.Server{DB: db}
+	options := api.GinServerOptions{}
+	// Registers the handlers per the config
+	api.RegisterHandlersWithOptions(v1, server, options)
 
 	// Listen and serve on
-	r.Run(fmt.Sprintf(":%s", cfg.Port))
+	r.Run(fmt.Sprintf(":%s", appEnv.Port))
 }

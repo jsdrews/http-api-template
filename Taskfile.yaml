@@ -11,28 +11,52 @@ tasks:
       - task -a
     desc: "List all tasks"
     silent: true
+
   up:
     cmds:
       - docker-compose up -d
     desc: "Bring up all services"
     silent: true
+
   down:
     cmds:
       - docker-compose down
     desc: "Bring down all services"
     silent: true
+
   restart:
     cmds:
       - docker-compose restart golang
+    aliases:
+      - r
+      - rs
     desc: "Restart golang service"
     silent: true
+
+  ps:
+    cmds:
+      - docker-compose ps
+    desc: "Show all services"
+    silent: true
+
   logs:
     cmds:
-      - docker-compose logs -f golang
+      - docker-compose logs -f app
     desc: "Show golang service logs"
     silent: true
+
   purge:
     cmds:
-      - docker-compose down -v rmi --all
+      - docker-compose down -v --rmi local
+    aliases:
+      - rm
     desc: "Bring down all services and remove volumes and images"
+    silent: true
+
+  codegen:
+    dir: src/app/api
+    cmds:
+      - oapi-codegen -config oapi-codegen-server-cfg.yaml api.yaml
+      - oapi-codegen -config oapi-codegen-types-cfg.yaml api.yaml
+    desc: "Run go generate"
     silent: true

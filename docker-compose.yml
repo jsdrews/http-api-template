@@ -19,13 +19,14 @@ services:
     networks:
       - network
 
-  golang:
-    image: golang:1.19
+  app:
+    image: golang:1.20
+    # build: src/app
     hostname: ${APP_HOSTNAME}
     privileged: true
-    working_dir: /code
+    working_dir: /app
     volumes:
-      - ./src/go:/code
+      - ./src/app:/app
     ports:
       - "${APP_PORT}:${APP_PORT}"
     expose:
@@ -35,6 +36,19 @@ services:
       - .env
     networks:
       - network
+
+  swagger-editor:
+    image: swaggerapi/swagger-editor
+    privileged: true
+    volumes:
+      - type: bind
+        source: ./src/app/api/api.yaml
+        target: /etc/api.conf
+    ports:
+      - "8889:8080"
+    environment:
+      - SWAGGER_FILE=/etc/api.conf
+
 
 networks:
   network:

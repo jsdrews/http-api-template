@@ -1,0 +1,45 @@
+openapi: 3.1.0
+info:
+  title: Testing
+  version: 1.0.11
+servers:
+  - url: api/v1
+paths:
+  /users:
+    get:
+      tags:
+        - user
+      summary: Get users
+      operationId: getUsers
+      responses:
+        default:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Users'
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: James
+        email:
+          type: string
+          example: john@email.com
+    Users:
+      type: array
+      items:
+        $ref: '#/components/schemas/User'
+      example:
+        - email: sholmes@email.com
+          firstName: Sherlock
+          lastName: Holmes
+        - email: jwatson@email.com
+          firstName: John
+          lastName: Watson
