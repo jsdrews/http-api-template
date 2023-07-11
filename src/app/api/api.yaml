@@ -1,15 +1,16 @@
-openapi: 3.1.0
+openapi: 3.0.0
 info:
   title: Testing
   version: 1.0.11
 servers:
-  - url: api/v1
+  - url: "http://localhost:8888/api/v1"
+    description: Running locally
 paths:
   /users:
     get:
       tags:
         - user
-      summary: Get users
+      summary: Get Users
       operationId: getUsers
       responses:
         default:
@@ -18,20 +19,69 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Users'
+    post:
+      tags:
+        - user
+      summary: Add Users
+      operationId: addUsers
+      requestBody:
+        description: Create a new pet in the store
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Users'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersAdded'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
+        '500':
+          description: Internal Server Error
 components:
   schemas:
+    ServerError:
+      type: object
+      required:
+        - type
+        - msg
+      properties:
+        type:
+          type: string
+          example: "InputValidation"
+        msg:
+          type: string
+          example: "Key: 'User.Email' Error:Field validation for 'Email' failed on the 'required' tag"
     User:
       type: object
+      required:
+        - firstName
+        - lastName
+        - email
       properties:
         firstName:
           type: string
           example: John
+          x-oapi-codegen-extra-tags:
+            validate: required,alpha
         lastName:
           type: string
           example: James
+          x-oapi-codegen-extra-tags:
+            validate: required,alpha
         email:
           type: string
           example: john@email.com
+          x-oapi-codegen-extra-tags:
+            validate: required,email
     Users:
       type: array
       items:
@@ -43,3 +93,23 @@ components:
         - email: jwatson@email.com
           firstName: John
           lastName: Watson
+    UsersAdded:
+      type: object
+      required:
+        - status
+        - numRequested
+        - numExisted
+        - numAdded
+      properties:
+        status:
+          type: string
+          example: success
+        numRequested: 
+          type: integer
+          example: 2
+        numExisted:
+          type: integer
+          example: 1
+        numAdded:
+          type: integer
+          example: 1

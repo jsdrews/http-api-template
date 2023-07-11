@@ -9,6 +9,7 @@ import (
 	"mongo-test/db"
 
 	"github.com/caarlos0/env"
+	"github.com/deepmap/oapi-codegen/pkg/gin-middleware"
 	"github.com/gin-gonic/gin"
 )
 
@@ -48,6 +49,13 @@ func main() {
 	// Recovery middleware recovers from any panics and writes a 500 if there was one.
 	r.Use(gin.Recovery())
 
+	// Validate server per the swagger spec
+	swagger, err := api.GetSwagger()
+	if err != nil {
+		log.Fatal("Error loading swagger spec: ", err)
+	}
+	r.Use(middleware.OapiRequestValidator(swagger))
+
 	// 404 Default handler
 	r.NoRoute(func(c *gin.Context) {
 		c.JSON(404, gin.H{"code": "PAGE_NOT_FOUND", "message": "Page not found"})
@@ -57,8 +65,11 @@ func main() {
 	v1 := r.Group("/api/v1")
 	server := controllers.Server{DB: db}
 	options := api.GinServerOptions{}
+	// Create a StrictServer with the API config
+	ssi := api.NewStrictHandler(server, []api.StrictMiddlewareFunc{})
 	// Registers the handlers per the config
-	api.RegisterHandlersWithOptions(v1, server, options)
+	api.RegisterHandlersWithOptions(v1, ssi, options)
+	// api.RegisterHandlersWithOptions(r, ssi, options)
 
 	// Listen and serve on
 	r.Run(fmt.Sprintf(":%s", appEnv.Port))

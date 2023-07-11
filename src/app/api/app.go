@@ -22,9 +22,12 @@ import (
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Get users
+	// Get Users
 	// (GET /users)
 	GetUsers(c *gin.Context)
+	// Add Users
+	// (POST /users)
+	AddUsers(c *gin.Context)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -47,6 +50,19 @@ func (siw *ServerInterfaceWrapper) GetUsers(c *gin.Context) {
 	}
 
 	siw.Handler.GetUsers(c)
+}
+
+// AddUsers operation middleware
+func (siw *ServerInterfaceWrapper) AddUsers(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.AddUsers(c)
 }
 
 // GinServerOptions provides options for the Gin server.
@@ -77,6 +93,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	}
 
 	router.GET(options.BaseURL+"/users", wrapper.GetUsers)
+	router.POST(options.BaseURL+"/users", wrapper.AddUsers)
 }
 
 type GetUsersRequestObject struct {
@@ -98,11 +115,48 @@ func (response GetUsersdefaultJSONResponse) VisitGetUsersResponse(w http.Respons
 	return json.NewEncoder(w).Encode(response.Body)
 }
 
+type AddUsersRequestObject struct {
+	Body *AddUsersJSONRequestBody
+}
+
+type AddUsersResponseObject interface {
+	VisitAddUsersResponse(w http.ResponseWriter) error
+}
+
+type AddUsers200JSONResponse UsersAdded
+
+func (response AddUsers200JSONResponse) VisitAddUsersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AddUsers400JSONResponse ServerError
+
+func (response AddUsers400JSONResponse) VisitAddUsersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AddUsers500Response struct {
+}
+
+func (response AddUsers500Response) VisitAddUsersResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
-	// Get users
+	// Get Users
 	// (GET /users)
 	GetUsers(ctx context.Context, request GetUsersRequestObject) (GetUsersResponseObject, error)
+	// Add Users
+	// (POST /users)
+	AddUsers(ctx context.Context, request AddUsersRequestObject) (AddUsersResponseObject, error)
 }
 
 type StrictHandlerFunc = runtime.StrictGinHandlerFunc
@@ -142,16 +196,54 @@ func (sh *strictHandler) GetUsers(ctx *gin.Context) {
 	}
 }
 
+// AddUsers operation middleware
+func (sh *strictHandler) AddUsers(ctx *gin.Context) {
+	var request AddUsersRequestObject
+
+	var body AddUsersJSONRequestBody
+	if err := ctx.ShouldBind(&body); err != nil {
+		ctx.Status(http.StatusBadRequest)
+		ctx.Error(err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.AddUsers(ctx, request.(AddUsersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AddUsers")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(AddUsersResponseObject); ok {
+		if err := validResponse.VisitAddUsersResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("Unexpected response type: %T", response))
+	}
+}
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/4xSO8/TQBD8K58GSsv+LDpXdDwKGkAUUYrlso4v3Eu360AU+b+jO4c8xIdEdevVznhm",
-	"Z88w0acYOKhgOEPMxJ5q+VU4lzflmDir5dplT9bV4hf55BgDDnEKb2u/NdGjgZ5S6YtmG/ZYGow2i34i",
-	"z4/Aj3EKL407enGaPMvf48u1E78f2GghKNLlAb25KodM0XmWB8V3AvF54uyi+YF7IXhfQViaG9HhJ6nE",
-	"8E+ii707km8VgGXbwCr7KvF15hEDXnW3ILpLCl2N4GaQcqYTlmLZhjEWtFqty/nComUdDY6cxcaAAX37",
-	"3PZ9wcfEgZLFgDdt3z6jQSKd6u+7+c+u9qzlKWGT2hg+7DDgHeu6zAaZJcUg6xnseKTZVYCJQTnUklJy",
-	"1lR0dyhOrxf1P05ltbZjMdkmXU3IbAyLjLN7uiqrocvsPeXTqvFpvohU2guGDco3tpVPOB+rxc0Zcy7B",
-	"UbLdsceyXX4HAAD//+GtBjz/AgAA",
+	"H4sIAAAAAAAC/7RVS2/bOBD+K8TsAr7Ilp3dBQydNi3SNi3QQ9LHIfCBFccSXYpkyJFjI9B/L0jJsvwI",
+	"moN7sizOfI+Z4egZclNZo1GTh+wZfF5ixePjPbo1uhvnjAt/rTMWHUmMh5Uvwg9ueGUVQgafcJux0VeP",
+	"bnJTcalGLGZm7yQqwdZcScFJGs2WxrFRF7LkUqFgRjMqkY0cPtbSoRgx4gUkQFsboD05qQtodi+GtLfa",
+	"1vStRz9NahLYwUL20J4mUf6ijzU/VphTIAj6T81iUHvIuzKl/j++n+SmOqFNYDM23MpxbgQWqMe4IcfH",
+	"xIsI2JUjJOzEJS1J0LuUztNnXh1Z/WhKfQkirmzJI5HiZ3l4hf6SREct2NsbKEi6Ir/UFH+g8aHvCfjS",
+	"qAr9QS8GBYT7Ep0y+c8hWQYfYhI0yR5o9cTJG/0iUFf+Acj3mADNIgFJWEWJfztcQgZ/pftrlXZ3Ko3D",
+	"1U8xcOf4tvd3LUQoz/Ho6brqT3r7sx5DasKiRdV1dbORnl4Ze4ePNZ5EX52L9sSpPmwA+DrP0fvf3rcu",
+	"94jyQG2yN3na/YAn9dIEdpIUub+gp3Yk1+h8uPUZzCbTyWwW1BqLmlsJGfwzmU6mkIDlVEb5ab2bpAIp",
+	"/IRKx71xKyCD90jtqAUL3hrt2x4IXPJaxYTcaEIdH7m1SuYxO12FOei352vmwLfWBPrcSUutia6oy1qx",
+	"XlmsqK+rirttq5HtRLZ37wGCK1g0CVjjz9i6FmJvK3bgjRHbP+/mrUNOyDjT+MQsEpPtmvdkHMJwTMjV",
+	"2BwV/Wo6vazEdsLO6Lw/W/UE/r2gguG39IyEWx33J5Phaxa4/2u5j6MIneaKtWhsBzecj2shXpqPGBgz",
+	"fdygh+B3tdZSF0yZnCu1hQRqF9ZiSWSzNI2vS+Mpm8/n85Rbma5n0CyaXwEAAP//fojWMUEIAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

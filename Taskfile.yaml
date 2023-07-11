@@ -26,7 +26,7 @@ tasks:
 
   restart:
     cmds:
-      - docker-compose restart golang
+      - docker-compose restart app
     aliases:
       - r
       - rs
