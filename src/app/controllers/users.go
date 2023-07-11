@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"mongo-test/api"
-	"net/http"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -12,13 +11,6 @@ import (
 )
 
 const collectionName = "users"
-
-// var result bson.M
-// err := s.DB.RunCommand(context.TODO(), bson.M{"dbStats": 1}).Decode(&result)
-// if err != nil {
-// 	panic(err)
-// }
-// c.JSON(http.StatusOK, result)
 
 func (s Server) GetUsers(ctx context.Context, request api.GetUsersRequestObject) (api.GetUsersResponseObject, error) {
 	results := api.Users{}
@@ -31,7 +23,7 @@ func (s Server) GetUsers(ctx context.Context, request api.GetUsersRequestObject)
 	if err = cursor.All(context.TODO(), &results); err != nil {
 		log.Fatal(err)
 	}
-	return api.GetUsersResponseObject(api.GetUsersdefaultJSONResponse{Body: results, StatusCode: http.StatusOK}), nil
+	return api.GetUsers200JSONResponse(results), nil
 }
 
 func (s Server) AddUsers(ctx context.Context, request api.AddUsersRequestObject) (api.AddUsersResponseObject, error) {

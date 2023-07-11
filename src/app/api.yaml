@@ -6,6 +6,23 @@ servers:
   - url: "http://localhost:8888/api/v1"
     description: Running locally
 paths:
+  /health:
+    get:
+      tags:
+        - health
+      summary: Server Health Check
+      operationId: getHealth
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheck'
+        '503':
+          description: Server Unavailable
+        '500':
+          description: Internal Server Error
   /users:
     get:
       tags:
@@ -29,7 +46,7 @@ paths:
             type: string
           description: Sort by this field
       responses:
-        default:
+        '200':
           description: successful operation
           content:
             application/json:
@@ -69,6 +86,14 @@ components:
       scheme: bearer
       bearerFormat: JWT 
   schemas:
+    HealthCheck:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          example: OK
     User:
       type: object
       required:
@@ -79,11 +104,13 @@ components:
         firstName:
           type: string
           example: John
+          pattern: \D+
           x-oapi-codegen-extra-tags:
             validate: required,alpha
         lastName:
           type: string
           example: James
+          pattern: \D+
           x-oapi-codegen-extra-tags:
             validate: required,alpha
         email:
