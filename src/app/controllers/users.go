@@ -29,18 +29,6 @@ func (s Server) GetUsers(ctx context.Context, request api.GetUsersRequestObject)
 }
 
 func (s Server) AddUsers(ctx context.Context, request api.AddUsersRequestObject) (api.AddUsersResponseObject, error) {
-	// Validate the request body
-	for _, user := range *request.Body {
-		err := ValidateInput(user)
-		if err != nil {
-			validationError := api.ServerError{
-				Type: "ValidationError",
-				Msg:  err.Error(),
-			}
-			return api.AddUsers400JSONResponse(validationError), nil
-		}
-	}
-
 	// Create a slice of WriteModels to perform in bulk
 	var writeModels []mongo.WriteModel
 	for _, user := range *request.Body {

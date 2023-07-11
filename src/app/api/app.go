@@ -24,7 +24,7 @@ import (
 type ServerInterface interface {
 	// Get Users
 	// (GET /users)
-	GetUsers(c *gin.Context)
+	GetUsers(c *gin.Context, params GetUsersParams)
 	// Add Users
 	// (POST /users)
 	AddUsers(c *gin.Context)
@@ -42,6 +42,35 @@ type MiddlewareFunc func(c *gin.Context)
 // GetUsers operation middleware
 func (siw *ServerInterfaceWrapper) GetUsers(c *gin.Context) {
 
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetUsersParams
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", c.Request.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter offset: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", c.Request.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter limit: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "sort" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "sort", c.Request.URL.Query(), &params.Sort)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter sort: %s", err), http.StatusBadRequest)
+		return
+	}
+
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
 		if c.IsAborted() {
@@ -49,11 +78,13 @@ func (siw *ServerInterfaceWrapper) GetUsers(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.GetUsers(c)
+	siw.Handler.GetUsers(c, params)
 }
 
 // AddUsers operation middleware
 func (siw *ServerInterfaceWrapper) AddUsers(c *gin.Context) {
+
+	c.Set(BearerAuthScopes, []string{})
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
@@ -97,6 +128,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 }
 
 type GetUsersRequestObject struct {
+	Params GetUsersParams
 }
 
 type GetUsersResponseObject interface {
@@ -132,13 +164,20 @@ func (response AddUsers200JSONResponse) VisitAddUsersResponse(w http.ResponseWri
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AddUsers400JSONResponse ServerError
+type AddUsers400Response struct {
+}
 
-func (response AddUsers400JSONResponse) VisitAddUsersResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
+func (response AddUsers400Response) VisitAddUsersResponse(w http.ResponseWriter) error {
 	w.WriteHeader(400)
+	return nil
+}
 
-	return json.NewEncoder(w).Encode(response)
+type AddUsers401Response struct {
+}
+
+func (response AddUsers401Response) VisitAddUsersResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
 }
 
 type AddUsers500Response struct {
@@ -172,8 +211,10 @@ type strictHandler struct {
 }
 
 // GetUsers operation middleware
-func (sh *strictHandler) GetUsers(ctx *gin.Context) {
+func (sh *strictHandler) GetUsers(ctx *gin.Context, params GetUsersParams) {
 	var request GetUsersRequestObject
+
+	request.Params = params
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.GetUsers(ctx, request.(GetUsersRequestObject))
@@ -232,18 +273,20 @@ func (sh *strictHandler) AddUsers(ctx *gin.Context) {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"4Obm5uamll7Vj9cwrsb/AgAA//80Jm0m9ggAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
