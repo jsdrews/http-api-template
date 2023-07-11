@@ -69,7 +69,6 @@ func main() {
 	ssi := api.NewStrictHandler(server, []api.StrictMiddlewareFunc{})
 	// Registers the handlers per the config
 	api.RegisterHandlersWithOptions(v1, ssi, options)
-	// api.RegisterHandlersWithOptions(r, ssi, options)
 
 	// Listen and serve on
 	r.Run(fmt.Sprintf(":%s", appEnv.Port))

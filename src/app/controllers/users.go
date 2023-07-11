@@ -13,6 +13,12 @@ import (
 
 const collectionName = "users"
 
+// var result bson.M
+// err := s.DB.RunCommand(context.TODO(), bson.M{"dbStats": 1}).Decode(&result)
+// if err != nil {
+// 	panic(err)
+// }
+// c.JSON(http.StatusOK, result)
 
 func (s Server) GetUsers(ctx context.Context, request api.GetUsersRequestObject) (api.GetUsersResponseObject, error) {
 	results := api.Users{}
@@ -42,6 +48,17 @@ func (s Server) AddUsers(ctx context.Context, request api.AddUsersRequestObject)
 		)
 		model.SetUpsert(true)
 		writeModels = append(writeModels, model)
+	}
+
+	// If there are no write models, return a success response
+	if len(writeModels) == 0 {
+		usersAdded := api.UsersAdded{
+			Status:       "no users to add",
+			NumRequested: 0,
+			NumAdded:     0,
+			NumExisted:   0,
+		}
+		return api.AddUsers200JSONResponse(usersAdded), nil
 	}
 
 	// Perform the bulk write

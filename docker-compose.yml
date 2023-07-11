@@ -42,13 +42,12 @@ services:
     privileged: true
     volumes:
       - type: bind
-        source: ./src/app/api/api.yaml
+        source: ./src/app/api.yaml
         target: /etc/api.conf
     ports:
       - "8889:8080"
     environment:
       - SWAGGER_FILE=/etc/api.conf
-
 
 networks:
   network:

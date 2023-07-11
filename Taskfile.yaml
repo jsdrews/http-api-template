@@ -12,19 +12,52 @@ tasks:
     desc: "List all tasks"
     silent: true
 
+  _docker_preconditions:
+    desc: "Checks for required programs"
+    preconditions:
+      - sh: command -v docker
+        msg: docker needed to run these tasks
+      - sh: command -v docker-compose
+        msg: docker-compose needed to run these tasks
+    silent: true
+    internal: true
+
+  generate:
+    dir: src/app/api
+    cmds:
+      - oapi-codegen -config oapi-codegen-server-cfg.yaml ../api.yaml
+      - oapi-codegen -config oapi-codegen-types-cfg.yaml ../api.yaml
+    desc: "Generate code from openapi spec"
+    preconditions:
+      - sh: command -v go
+        msg: go needed to run these tasks
+      - sh: command -v oapi-codegen
+        msg: oapi-codegen needed to run these tasks. (go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.8.1)
+    silent: true
+  
   up:
+    deps:
+      - generate
+      - _docker_preconditions
     cmds:
       - docker-compose up -d
     desc: "Bring up all services"
+    status:
+      - test $(docker-compose ps -q app)
     silent: true
 
   down:
+    deps:
+      - _docker_preconditions
     cmds:
       - docker-compose down
     desc: "Bring down all services"
     silent: true
 
   restart:
+    deps:
+      - generate
+      - _docker_preconditions
     cmds:
       - docker-compose restart app
     aliases:
@@ -34,29 +67,50 @@ tasks:
     silent: true
 
   ps:
+    deps:
+      - _docker_preconditions
     cmds:
       - docker-compose ps
     desc: "Show all services"
     silent: true
 
   logs:
+    deps:
+      - _docker_preconditions
     cmds:
       - docker-compose logs -f app
-    desc: "Show golang service logs"
+    desc: "Show api service logs"
     silent: true
 
   purge:
+    deps:
+      - _docker_preconditions
     cmds:
       - docker-compose down -v --rmi local
     aliases:
       - rm
     desc: "Bring down all services and remove volumes and images"
+    status:
+      - test $(docker-compose ps -q | wc -l) -eq 0
     silent: true
 
-  codegen:
-    dir: src/app/api
+  edit:
+    deps:
+      - _docker_preconditions
     cmds:
-      - oapi-codegen -config oapi-codegen-server-cfg.yaml api.yaml
-      - oapi-codegen -config oapi-codegen-types-cfg.yaml api.yaml
-    desc: "Run go generate"
+      - docker compose up -d swagger-editor
+    desc: "Run swagger editor to edit api spec"
+    silent: true
+
+  test:
+    deps:
+      - up
+    cmds:
+      - |
+        docker run \
+        -v $PWD/src/app/api.yaml:/api.yaml \
+        --network host schemathesis/schemathesis:stable \
+        run /api.yaml --base-url http://localhost:8888/api/v1
+      # - go test -v ./...
+    desc: "Run api tests"
     silent: true

@@ -47,8 +47,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Users'
-      security:
-        - bearerAuth: []
+      # security:
+      #   - bearerAuth: []
       responses:
         '200':
           description: Successful operation
