@@ -82,6 +82,16 @@ tasks:
     desc: "Show api service logs"
     silent: true
 
+  db:
+    deps:
+      - _docker_preconditions
+    cmds:
+      - docker-compose exec -it mongo mongosh -u ${MONGO_INITDB_ROOT_USERNAME} -p ${MONGO_INITDB_ROOT_PASSWORD}
+    desc: "Connect to postgres db"
+    dotenv:
+      - .env
+    silent: true
+
   purge:
     deps:
       - _docker_preconditions
