@@ -106,6 +106,14 @@ tasks:
       - test $(docker-compose ps -q | wc -l) -eq 0
     silent: true
 
+  mock:
+    deps:
+      - _docker_preconditions
+    cmds:
+      - docker-compose up -d mockserver
+    desc: "Run mock server"
+    silent: true
+
   edit:
     deps:
       - _docker_preconditions

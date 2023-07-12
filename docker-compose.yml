@@ -43,11 +43,27 @@ services:
     volumes:
       - type: bind
         source: ./src/app/api.yaml
-        target: /etc/api.conf
+        target: /etc/api.yaml
     ports:
       - "8889:8080"
     environment:
-      - SWAGGER_FILE=/etc/api.conf
+      - SWAGGER_FILE=/etc/api.yaml
+
+  mockserver:
+    image: danielgtaylor/apisprout
+    privileged: true
+    volumes:
+      - type: bind
+        source: ./src/app/api.yaml
+        target: /etc/api.yaml
+    ports:
+      - "8887:8000"
+    entrypoint: 
+      - "apisprout"
+      - "--validate-server"
+      - "/etc/api.yaml"
+    environment:
+      - MOCKSERVER_INITIALIZATION_JSON_PATH=/etc/mockserver/initialization.json
 
 networks:
   network:
