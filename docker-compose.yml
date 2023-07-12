@@ -9,7 +9,7 @@ services:
     volumes:
       - mongo-data:/data/db
       - type: bind
-        source: ./src/mongo/mongod.conf
+        source: ./db/mongo/mongod.conf
         target: /etc/mongod.conf
     expose:
       - "27017"
@@ -21,12 +21,12 @@ services:
 
   app:
     image: golang:1.20
-    # build: src/app
+    # build: src/server
     hostname: ${APP_HOSTNAME}
     privileged: true
-    working_dir: /app
+    working_dir: /code
     volumes:
-      - ./src/app:/app
+      - ./src/server:/code
     ports:
       - "${APP_PORT}:${APP_PORT}"
     expose:
@@ -42,7 +42,7 @@ services:
     privileged: true
     volumes:
       - type: bind
-        source: ./src/app/api.yaml
+        source: ./src/api.yaml
         target: /etc/api.yaml
     ports:
       - "8889:8080"
@@ -54,7 +54,7 @@ services:
     privileged: true
     volumes:
       - type: bind
-        source: ./src/app/api.yaml
+        source: ./src/api.yaml
         target: /etc/api.yaml
     ports:
       - "8887:8000"

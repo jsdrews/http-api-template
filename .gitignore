@@ -17,3 +17,8 @@
 
 *.Identifier
 *.DS_Store
+*.zip
+*.tar.gz
+*.tar
+*.gz
+*.tgz

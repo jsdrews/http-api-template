@@ -3,7 +3,9 @@
 version: '3'
 
 vars:
-  GREETING: Hello, World!
+  API_SPEC: src/api.yaml
+  SERVER_DIR: src/server
+  CLIENTS_DIR: src/clients
 
 tasks:
   default:
@@ -23,12 +25,19 @@ tasks:
     internal: true
 
   generate:
-    dir: src/app/api
     aliases:
       - gen
     cmds:
-      - oapi-codegen -config oapi-codegen-server-cfg.yaml ../api.yaml
-      - oapi-codegen -config oapi-codegen-types-cfg.yaml ../api.yaml
+      - |
+        oapi-codegen \
+        -config {{ .SERVER_DIR }}/api/oapi-codegen-server-cfg.yaml \
+        -o {{ .SERVER_DIR }}/api/api.go \
+        {{ .API_SPEC }}
+      - |
+        oapi-codegen \
+        -config {{ .SERVER_DIR }}/api/oapi-codegen-types-cfg.yaml \
+        -o {{ .SERVER_DIR }}/api/types.go \
+        {{ .API_SPEC }}
     desc: "Generate code from openapi spec"
     preconditions:
       - sh: command -v go
@@ -37,6 +46,36 @@ tasks:
         msg: oapi-codegen needed to run these tasks. (go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.8.1)
     silent: true
   
+  generate-client:
+    aliases:
+      - gen-client
+      - genc
+    deps:
+      - _docker_preconditions
+    cmds:
+      - |
+        {{ if .CLI_ARGS }}
+        
+        docker run --rm \
+        -v $PWD/{{ .API_SPEC }}:/api.yaml \
+        -v $PWD/{{ .CLIENTS_DIR }}/{{ .CLI_ARGS }}:/generated \
+        openapitools/openapi-generator-cli generate \
+        -i /api.yaml \
+        -g {{ .CLI_ARGS }} \
+        -o /generated
+
+        echo
+        echo "Generated client code at {{ .CLIENTS_DIR }}/{{ .CLI_ARGS }}"
+
+        {{ else }}
+
+        docker run --rm openapitools/openapi-generator-cli list
+        echo "Please specify client name from the above list"
+
+        {{ end }}
+    desc: "Generate client code from openapi spec"
+    silent: true
+
   up:
     deps:
       - generate
@@ -111,6 +150,8 @@ tasks:
       - _docker_preconditions
     cmds:
       - docker-compose up -d mockserver
+      - echo
+      - echo "Mock server is running at http://localhost:8887"
     desc: "Run mock server"
     silent: true
 
@@ -119,6 +160,8 @@ tasks:
       - _docker_preconditions
     cmds:
       - docker compose up -d swagger-editor
+      - echo
+      - echo "Swagger editor is running at http://localhost:8889"
     desc: "Run swagger editor to edit api spec"
     silent: true
 
@@ -127,8 +170,8 @@ tasks:
       - up
     cmds:
       - |
-        docker run \
-        -v $PWD/src/app/api.yaml:/api.yaml \
+        docker run --rm \
+        -v $PWD/{{ .API_SPEC }}:/api.yaml \
         --network host schemathesis/schemathesis:stable \
         run /api.yaml --base-url http://localhost:8888/api/v1
       # - go test -v ./...

@@ -3,4 +3,3 @@ generate:
   gin-server: true
   strict-server: true
   embedded-spec: true
-output: app.go
