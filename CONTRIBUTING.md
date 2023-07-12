@@ -9,14 +9,14 @@ The openapi specification is located in the root of the src folder (`src`) and i
 #### Editing the OpenAPI Specification
 Run `task edit` to run the editor. Paste `http://localhost:8889` into the browser to edit the api spec. Save & overwrite the `api.yaml` file to update the api (this can be done in the editor).
 
-#### Generating the Web API
-Run `task generate` to generate the web api. This will generate the server interface and types code in the `src/server/api` folder (everytime you edit the spec you will need to regenerate the api). This code will be available internally via the `api` package. 
+#### Generating the Web Server API
+Run `task generate-server` to generate the web api. This will generate the server interface and types code in the `src/server/api` folder (everytime you edit the spec you will need to regenerate the api). This code will be available internally via the `api` package. 
 
-#### Quick Mocking the Web API
+#### Quick Mocking the Web Server API
 Run `task mock` to run the web api mock. This will start the web api mock on port `8887` (`http://localhost:8887/api/v1`). You can then use the mock to test the web api. The mock data it serves will be the examples in the api spec.
 
 #### Developing the Web API
-Every time you make a change to the api spec, you will need to run `task generate` to update the `api` package. On top of that you will need to add controllers to `src/server/controllers` to satisfy the auto generated interface. The controllers will be available internally via the `controllers` package.
+Every time you make a change to the api spec, you will need to run `task generate-server` to update the `api` package. On top of that you will need to add controllers to `src/server/controllers` to satisfy the auto generated interface. The controllers will be available internally via the `controllers` package.
 
 An example of a controller is the following:
 ```go

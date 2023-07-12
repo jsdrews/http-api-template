@@ -24,8 +24,9 @@ tasks:
     silent: true
     internal: true
 
-  generate:
+  generate-server:
     aliases:
+      - gen-server
       - gen
     cmds:
       - |
@@ -55,7 +56,7 @@ tasks:
     cmds:
       - |
         {{ if .CLI_ARGS }}
-        
+
         docker run --rm \
         -v $PWD/{{ .API_SPEC }}:/api.yaml \
         -v $PWD/{{ .CLIENTS_DIR }}/{{ .CLI_ARGS }}:/generated \
@@ -78,7 +79,7 @@ tasks:
 
   up:
     deps:
-      - generate
+      - generate-server
       - _docker_preconditions
     cmds:
       - docker-compose up -d
@@ -97,7 +98,7 @@ tasks:
 
   restart:
     deps:
-      - generate
+      - generate-server
       - _docker_preconditions
     cmds:
       - docker-compose restart app
