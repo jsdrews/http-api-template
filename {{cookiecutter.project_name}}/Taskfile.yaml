@@ -153,7 +153,7 @@ tasks:
     cmds:
       - docker-compose up -d mockserver
       - echo
-      - echo "Mock server is running at http://localhost:8887"
+      - echo "Mock server is running at http://localhost:${MOCKSERVER_PORT}"
     desc: "Run mock server"
     silent: true
 
@@ -163,7 +163,7 @@ tasks:
     cmds:
       - docker compose up -d swagger-editor
       - echo
-      - echo "Swagger editor is running at http://localhost:8889"
+      - echo "Swagger editor is running at http://localhost:${SWAGGER_PORT}"
     desc: "Run swagger editor to edit api spec"
     silent: true
 
