@@ -7,9 +7,6 @@ vars:
   SERVER_DIR: src/server
   CLIENTS_DIR: src/clients
 
-env:
-  COMPOSE_PROJECT_NAME: $PROJECT_NAME
-
 dotenv:
   - .env
 
