@@ -107,16 +107,19 @@ components:
           type: string
           example: John
           pattern: \D+
+          format: alpha
           x-oapi-codegen-extra-tags:
             validate: required,alpha
         lastName:
           type: string
           example: James
           pattern: \D+
+          format: alpha
           x-oapi-codegen-extra-tags:
             validate: required,alpha
         email:
           type: string
+          format: email
           example: john@email.com
           x-oapi-codegen-extra-tags:
             validate: required,email
