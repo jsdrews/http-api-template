@@ -7,6 +7,12 @@ vars:
   SERVER_DIR: src/server
   CLIENTS_DIR: src/clients
 
+env:
+  COMPOSE_PROJECT_NAME: $PROJECT_NAME
+
+dotenv:
+  - .env
+
 tasks:
   default:
     cmds:
@@ -130,8 +136,6 @@ tasks:
     cmds:
       - docker-compose exec -it mongo mongosh -u ${MONGO_INITDB_ROOT_USERNAME} -p ${MONGO_INITDB_ROOT_PASSWORD}
     desc: "Connect to postgres db"
-    dotenv:
-      - .env
     silent: true
 
   purge:

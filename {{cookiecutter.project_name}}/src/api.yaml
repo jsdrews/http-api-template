@@ -3,62 +3,52 @@ info:
   title: Testing
   version: 1.0.0
 servers:
-- url: http://localhost:8888/api/v1
-  description: Running locally for development
-- url: http://localhost:8887/api/v1
-  description: Mockserver for quick development
+  - url: "http://localhost:8888/api/v1"
+    description: Running locally for development
+  - url: "http://localhost:8887/api/v1"
+    description: Mockserver for quick development
 paths:
   /health:
     get:
       tags:
-      - health
+        - health
       summary: Server Health Check
       operationId: getHealth
       responses:
-        "200":
+        '200':
           description: successful operation
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthCheck'
-        "500":
-          description: Internal Server Error
-        "503":
+        '503':
           description: Server Unavailable
+        '500':
+          description: Internal Server Error
   /users:
     get:
       tags:
-      - user
+        - user
       summary: Get Users
       operationId: getUsers
       parameters:
-      - name: offset
-        in: query
-        description: The number of items to skip before starting to collect the result
-          set
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: integer
-      - name: limit
-        in: query
-        description: The numbers of items to return
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: integer
-      - name: sort
-        in: query
-        description: Sort by this field
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
+        - in: query
+          name: offset
+          schema:
+            type: integer
+          description: The number of items to skip before starting to collect the result set
+        - in: query
+          name: limit
+          schema:
+            type: integer
+          description: The numbers of items to return
+        - in: query
+          name: sort
+          schema:
+            type: string
+          description: Sort by this field
       responses:
-        "200":
+        '200':
           description: successful operation
           content:
             application/json:
@@ -66,89 +56,96 @@ paths:
                 $ref: '#/components/schemas/Users'
     post:
       tags:
-      - user
+        - user
       summary: Add Users
       operationId: addUsers
       requestBody:
         description: Create a new pet in the store
+        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/Users'
-        required: true
+      # security:
+      #   - bearerAuth: []
       responses:
-        "200":
+        '200':
           description: Successful operation
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UsersAdded'
-        "400":
+        '400':
           description: Invalid input
-        "401":
+        '401':
           description: Unauthorized
-        "500":
+        '500':
           description: Internal Server Error
 components:
+  securitySchemes:
+    bearerAuth:            # arbitrary name for the security scheme
+      type: http
+      scheme: bearer
+      bearerFormat: JWT 
   schemas:
     HealthCheck:
-      required:
-      - status
       type: object
+      required:
+        - status
       properties:
         status:
           type: string
           example: OK
-      example:
-        status: OK
     User:
-      required:
-      - email
-      - firstName
-      - lastName
       type: object
+      required:
+        - firstName
+        - lastName
+        - email
       properties:
         firstName:
-          pattern: \D+
           type: string
           example: John
-          x-oapi-codegen-extra-tags:
-            validate: "required,alpha"
-        lastName:
           pattern: \D+
+          format: alpha
+          x-oapi-codegen-extra-tags:
+            validate: required,alpha
+        lastName:
           type: string
           example: James
+          pattern: \D+
+          format: alpha
           x-oapi-codegen-extra-tags:
-            validate: "required,alpha"
+            validate: required,alpha
         email:
           type: string
+          format: email
           example: john@email.com
           x-oapi-codegen-extra-tags:
-            validate: "required,email"
+            validate: required,email
     Users:
       type: array
-      example:
-      - email: sholmes@email.com
-        firstName: Sherlock
-        lastName: Holmes
-      - email: jwatson@email.com
-        firstName: John
-        lastName: Watson
       items:
         $ref: '#/components/schemas/User'
-      x-schema-name: Users
+      example:
+        - email: sholmes@email.com
+          firstName: Sherlock
+          lastName: Holmes
+        - email: jwatson@email.com
+          firstName: John
+          lastName: Watson
     UsersAdded:
-      required:
-      - numAdded
-      - numExisted
-      - numRequested
-      - status
       type: object
+      required:
+        - status
+        - numRequested
+        - numExisted
+        - numAdded
       properties:
         status:
           type: string
           example: success
-        numRequested:
+        numRequested: 
           type: integer
           example: 2
         numExisted:
@@ -157,13 +154,3 @@ components:
         numAdded:
           type: integer
           example: 1
-      example:
-        numRequested: 2
-        numExisted: 1
-        numAdded: 1
-        status: success
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
