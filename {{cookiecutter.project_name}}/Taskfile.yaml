@@ -17,6 +17,10 @@ tasks:
     desc: "List all tasks"
     silent: true
 
+  testing:
+    cmds:
+      - echo $COMPOSE_PROJECT_NAME
+
   _docker_preconditions:
     desc: "Checks for required programs"
     preconditions:
