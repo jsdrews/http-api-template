@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"mongo-test/api"
+	"server-api/api"
 
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -15,7 +15,7 @@ func (s Server) GetHealth(ctx context.Context, request api.GetHealthRequestObjec
 	if err != nil {
 		return api.GetHealth500Response{}, err
 	}
-	
+
 	// Check if the database is healthy
 	if result["ok"] != 1.0 {
 		return api.GetHealth503Response{}, fmt.Errorf("database is not healthy")

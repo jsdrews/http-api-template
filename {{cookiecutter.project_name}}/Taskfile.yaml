@@ -17,10 +17,6 @@ tasks:
     desc: "List all tasks"
     silent: true
 
-  testing:
-    cmds:
-      - echo $COMPOSE_PROJECT_NAME
-
   _docker_preconditions:
     desc: "Checks for required programs"
     preconditions:
@@ -90,6 +86,16 @@ tasks:
       - _docker_preconditions
     cmds:
       - docker-compose up -d
+      - |
+        # Wait for the server to start
+        until curl -s -f -o /dev/null localhost:$APP_PORT/api/v1/health
+        do
+          echo "Waiting for api to start..."
+          sleep 2
+        done
+      - echo api is running at http://localhost:$APP_PORT
+      - echo swagger ui is running at http://localhost:$SWAGGER_PORT
+      - echo mock server is running at http://localhost:$MOCKSERVER_PORT
     desc: "Bring up all services"
     status:
       - test $(docker-compose ps -q app)

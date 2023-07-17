@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"log"
 
-	"mongo-test/api"
-	"mongo-test/controllers"
-	"mongo-test/db"
+	"server-api/api"
+	"server-api/controllers"
+	"server-api/db"
 
 	"github.com/caarlos0/env"
-	"github.com/deepmap/oapi-codegen/pkg/gin-middleware"
+	middleware "github.com/deepmap/oapi-codegen/pkg/gin-middleware"
 	"github.com/gin-gonic/gin"
 )
 
