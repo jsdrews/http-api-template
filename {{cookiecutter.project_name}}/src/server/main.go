@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"server-api/api"
+	"server-api/auth"
 	"server-api/controllers"
 	"server-api/db"
 
@@ -54,7 +55,10 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading swagger spec: ", err)
 	}
-	r.Use(middleware.OapiRequestValidator(swagger))
+	validatorOptions := &middleware.Options{}
+	// Add authentication middleware for google id token
+	validatorOptions.Options.AuthenticationFunc = auth.GoogleJWTValidate
+	r.Use(middleware.OapiRequestValidatorWithOptions(swagger, validatorOptions))
 
 	// 404 Default handler
 	r.NoRoute(func(c *gin.Context) {
@@ -69,6 +73,11 @@ func main() {
 	ssi := api.NewStrictHandler(server, []api.StrictMiddlewareFunc{})
 	// Registers the handlers per the config
 	api.RegisterHandlersWithOptions(v1, ssi, options)
+
+	// Swagger JSON
+	v1.GET("/swagger.json", func(c *gin.Context) {
+		c.JSON(200, swagger)
+	})
 
 	// Listen and serve on
 	r.Run(fmt.Sprintf(":%s", appEnv.Port))

@@ -22,3 +22,5 @@
 *.tar
 *.gz
 *.tgz
+
+auth/
