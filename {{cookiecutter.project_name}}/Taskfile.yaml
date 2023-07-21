@@ -47,7 +47,7 @@ tasks:
       - sh: command -v go
         msg: go needed to run these tasks
       - sh: command -v oapi-codegen
-        msg: oapi-codegen needed to run these tasks. (go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.8.1)
+        msg: oapi-codegen needed to run these tasks. (go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest)
     silent: true
   
   generate-client:
