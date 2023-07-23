@@ -2,9 +2,9 @@ version: '3.2'
 
 services:
 
-  mongo:
+  db:
     image: mongo
-    hostname: ${MONGO_HOSTNAME}
+    hostname: ${DB_HOSTNAME}
     privileged: true
     volumes:
       - mongo-data:/data/db
@@ -14,26 +14,33 @@ services:
     expose:
       - "27017"
     command: [ "-f",  "/etc/mongod.conf" ]
-    env_file:
-      - .env
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${DB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MONGO_INITDB_DATABASE=${DB_NAME}
     networks:
       - network
 
-  app:
+  api:
     image: golang:1.20
     # build: src/server
-    hostname: ${APP_HOSTNAME}
+    hostname: api-host
     privileged: true
     working_dir: /code
     volumes:
       - ./src/server:/code
     ports:
-      - "${APP_PORT}:${APP_PORT}"
+      - "${API_PORT}:${API_PORT}"
     expose:
-      - "${APP_PORT}"
+      - "${API_PORT}"
     entrypoint: [ "go", "run", "main.go" ]
-    env_file:
-      - .env
+    environment:
+      - API_PORT=${API_PORT}
+      - API_DEV_MODE=${API_DEV_MODE}
+      - DB_HOSTNAME=${DB_HOSTNAME}
+      - DB_ROOT_USERNAME=${DB_ROOT_USERNAME}
+      - DB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - DB_NAME=${DB_NAME}
     networks:
       - network
 

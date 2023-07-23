@@ -67,7 +67,7 @@ paths:
             schema:
               $ref: '#/components/schemas/Users'
       security:
-        - GoogleOAuth2: []
+        - bearerAuth: []
       responses:
         '200':
           description: Successful operation
@@ -186,10 +186,10 @@ components:
             source: "canwsl-15"
             specversion: "1.0"
             time: "2023-02-15T22:27:51.254590+00:00"
-            type: "RenderVersionDelete"
+            type: "User"
         data: 
           type: string
-          example: "eyJpZCI6ICJkN2ViYTUyMy0zMDFlLTQyODQtYTc0YS1mM2YyNzg0MzRhZTYiLCAibmFtZSI6ICJlbnZfdGVzdGluZyIsICJ0aW1lX2NyZWF0ZWQiOiAiMjAyMi0wNS0wOVQxNTowODoyMC42OTMxNzUiLCAiY3JlYXRvciI6ICJqdGtpcmsiLCAidGFncyI6IFsiYXBpX3Rlc3QiXSwgInZlcnNpb24iOiAzLCAiZnJhbWVfcmFuZ2UiOiB7ImZyYW1lX3JhbmdlIjogWzEwMDEsIDEwMDVdLCAiaW5jcmVtZW50IjogMSwgImZyYW1lX2xpc3QiOiBbMTAwMSwgMTAwMiwgMTAwMywgMTAwNCwgMTAwNV19LCAic291cmNlX2ZpbGVzIjogbnVsbCwgInR5cGUiOiAiZWxlbWVudF9wcmVjb21wIiwgImNvbnRleHQiOiB7InNob3ciOiAidGVzdGluZyIsICJzaG90IjogIjAwMV90ZXN0XzEyMyIsICJzZXEiOiAiMDAxX3Rlc3QiLCAiZXBpc29kZSI6IG51bGx9LCAicmVuZGVyX291dHB1dHMiOiB7Im1haW4iOiB7InJlcHJlc2VudGF0aW9ucyI6IHsiZnJhbWVzIjogeyJpZCI6ICIwODZhMzU4ZS1hMDVhLTQyOTgtYWM2Zi01NGQzNWU1Mjg2MzAiLCAibmFtZSI6ICJmcmFtZXMiLCAidGltZV9jcmVhdGVkIjogIjIwMjItMDUtMDlUMTU6MDg6MjAuNzY3NjgwIiwgImNyZWF0b3IiOiAianRraXJrIiwgInRhZ3MiOiBbImFwaV90ZXN0Il0sICJmaWxlIjogeyJuYW1lIjogIjAwMV90ZXN0XzEyMy5lbnZfdGVzdGluZy5iZWF1dHkudjAwMy57ZnJhbWV9LmV4ciIsICJwYXRoIjogIi9qb2JzL3Rlc3Rpbmcvc2hvdHMvMDAxX3Rlc3QvMDAxX3Rlc3RfMTIzL3B1Ymxpc2gvcmVuZGVyL2Vudl90ZXN0aW5nL3YwMDMvZnJhbWVzLzAwMV90ZXN0XzEyMy5lbnZfdGVzdGluZy5iZWF1dHkudjAwMy57ZnJhbWV9LmV4ciIsICJleHRlbnNpb24iOiAiZXhyIiwgImlzX3NlcXVlbmNlIjogdHJ1ZX0sICJleHRyYV9maWxlcyI6IG51bGwsICJ0eXBlIjogInJlbmRlciIsICJpbWFnZV9kYXRhIjogeyJyZXNvbHV0aW9uIjogWzM0MjQsIDIyMDJdLCAiY29tcHJlc3Npb24iOiBudWxsLCAiYml0X2RlcHRoIjogbnVsbH0sICJmcmFtZV9yYW5nZSI6IHsiZnJhbWVfcmFuZ2UiOiBbMTAwMSwgMTAwNV0sICJpbmNyZW1lbnQiOiAxLCAiZnJhbWVfbGlzdCI6IFsxMDAxLCAxMDAyLCAxMDAzLCAxMDA0LCAxMDA1XX0sICJjaGFubmVscyI6IG51bGx9LCAiYmZ4bW92IjogeyJpZCI6ICI3Y2I4NmM2MS1hNDdlLTQ2MjQtYTMwNi00MTVlNWNkN2UwOWIiLCAibmFtZSI6ICJiZnhtb3YiLCAidGltZV9jcmVhdGVkIjogIjIwMjItMDUtMDlUMTU6MDg6MjAuODI3NTIwIiwgImNyZWF0b3IiOiAianRraXJrIiwgInRhZ3MiOiBbImFwaV90ZXN0Il0sICJmaWxlIjogeyJuYW1lIjogIjAwMV90ZXN0XzEyMy5lbnZfdGVzdGluZy5iZWF1dHkuYmZ4bW92LnYwMDMubW92IiwgInBhdGgiOiAiL2pvYnMvdGVzdGluZy9zaG90cy8wMDFfdGVzdC8wMDFfdGVzdF8xMjMvcHVibGlzaC9yZW5kZXIvZW52X3Rlc3RpbmcvdjAwMy9iZnhtb3YvMDAxX3Rlc3RfMTIzLmVudl90ZXN0aW5nLmJlYXV0eS5iZnhtb3YudjAwMy5tb3YiLCAiZXh0ZW5zaW9uIjogIm1vdiIsICJpc19zZXF1ZW5jZSI6IGZhbHNlfSwgImV4dHJhX2ZpbGVzIjogbnVsbCwgInR5cGUiOiAicmVuZGVyIiwgIm1vdmllX2RhdGEiOiB7InJlc29sdXRpb24iOiBbMzQyNCwgMjIwMl0sICJjb21wcmVzc2lvbiI6IG51bGwsICJhdWRpb19jb21wcmVzc2lvbiI6IG51bGwsICJiaXRfZGVwdGgiOiBudWxsfSwgImZyYW1lX3JhbmdlIjogeyJmcmFtZV9yYW5nZSI6IFsxMDAxLCAxMDA1XSwgImluY3JlbWVudCI6IDEsICJmcmFtZV9saXN0IjogWzEwMDEsIDEwMDIsIDEwMDMsIDEwMDQsIDEwMDVdfX19LCAicHJpbWFyeSI6ICJmcmFtZXMiLCAicHJpbWFyeV9pc2VxIjogImZyYW1lcyIsICJwcmltYXJ5X21vdmllIjogImJmeG1vdiJ9fSwgInByaW1hcnlfcmVuZGVyX291dHB1dCI6ICJtYWluIiwgImJhc2VfbmFtZSI6ICIwMDFfdGVzdF8xMjMuZW52X3Rlc3RpbmciLCAiY3VzdG9tIjogbnVsbH0="
+          example: "eyJmaXJzdE5hbWUiOiAiam9obiIsICJsYXN0TmFtZSI6ICJkb2UiLCAiZW1haWwiOiAiamRAZW1haWwuY29tIn0="
         publish_time:
           type: string
           format: date-time

@@ -100,7 +100,7 @@ func (siw *ServerInterfaceWrapper) GetUsers(c *gin.Context) {
 // AddUsers operation middleware
 func (siw *ServerInterfaceWrapper) AddUsers(c *gin.Context) {
 
-	c.Set(GoogleOAuth2Scopes, []string{})
+	c.Set(BearerAuthScopes, []string{})
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
@@ -364,8 +364,8 @@ var swaggerSpec = []string{
 	"FuOm8X1N1mItSlpUjKG3ogIKRKFABQ898jwe0Wx5NJnkyc227PtF9NRjhMIOI0bp2R1BsqYz3wp0TSxq",
 	"PFfSmqAmBm1zJHkgHsy9NrHRC2o1b+KzVbojpncoaiWClYSiamC0KMBTGJDNVdOsVnA24N+omb98NW8Y",
 	"dbRA5fBReRRlXNJYEGKE7VtCuMfFSzc8XzADPK+PeMPrYW9IHzrKON9Ljjr/D56eaWyx++kb+R58Tw/Q",
-	"3vm2/UYr27pUk3/sXqe3oyj/jeaumuaY5nKmmHrIiD71zkWTsVRra+dqQqwanKEl38VmFdCvL8SqLFNY",
-	"S0Gqy8vLy1J7U87O4fCU/0X1fQZNGR96U98/O+8v67yjxb8BAAD//9uVjmNCDQAA",
+	"3vm2/UYr27pUk39sXyy3oyj+jeKumuaY4nKemHjIhj71zkWLsVRra+dqQqwanKEl38VWFdCvr8OqLFNY",
+	"S0Gqy8vLy1J7U87O4fCM/0X1fQZNGR96U98/O+8v67yjxb8BAAD//2kbEKRADQAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

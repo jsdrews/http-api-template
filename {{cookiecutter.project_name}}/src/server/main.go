@@ -16,11 +16,12 @@ import (
 
 type AppEnv struct {
 	// Port is the port number to listen on
-	Port       string `env:"APP_PORT" envDefault:"8888"`
-	DBHostname string `env:"MONGO_HOSTNAME,required"`
-	DBUsername string `env:"MONGO_INITDB_ROOT_USERNAME,required"`
-	DBPassword string `env:"MONGO_INITDB_ROOT_PASSWORD,required"`
-	DBName     string `env:"MONGO_INITDB_DATABASE,required"`
+	Port       string `env:"API_PORT" envDefault:"8888"`
+	DBHostname string `env:"DB_HOSTNAME,required"`
+	DBUsername string `env:"DB_ROOT_USERNAME,required"`
+	DBPassword string `env:"DB_ROOT_PASSWORD,required"`
+	DBName     string `env:"DB_NAME,required"`
+	DevMode    bool   `env:"API_DEV_MODE", envDefault:"false"`
 }
 
 func main() {
@@ -57,7 +58,11 @@ func main() {
 	}
 	validatorOptions := &middleware.Options{}
 	// Add authentication middleware for google id token
-	validatorOptions.Options.AuthenticationFunc = auth.GoogleJWTValidate
+	if appEnv.DevMode {
+		validatorOptions.Options.AuthenticationFunc = auth.DevJWTValidate
+	} else {
+		validatorOptions.Options.AuthenticationFunc = auth.GoogleJWTValidate
+	}
 	r.Use(middleware.OapiRequestValidatorWithOptions(swagger, validatorOptions))
 
 	// 404 Default handler

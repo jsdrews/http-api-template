@@ -7,9 +7,6 @@ vars:
   SERVER_DIR: src/server
   CLIENTS_DIR: src/clients
 
-dotenv:
-  - .env
-
 tasks:
   default:
     cmds:
@@ -88,17 +85,17 @@ tasks:
       - docker-compose up -d
       - |
         # Wait for the server to start
-        until curl -s -f -o /dev/null localhost:$APP_PORT/api/v1/health
+        until curl -s -f -o /dev/null localhost:$API_PORT/api/v1/health
         do
           echo "Waiting for api to start..."
           sleep 2
         done
-      - echo api is running at http://localhost:$APP_PORT
+      - echo api is running at http://localhost:$API_PORT
       - echo swagger ui is running at http://localhost:$SWAGGER_PORT
       - echo mock server is running at http://localhost:$MOCKSERVER_PORT
     desc: "Bring up all services"
     status:
-      - test $(docker-compose ps -q app)
+      - test $(docker-compose ps -q api)
     silent: true
 
   down:
@@ -114,7 +111,12 @@ tasks:
       - generate-server
       - _docker_preconditions
     cmds:
-      - docker-compose restart app
+      - |
+        {{ if .CLI_ARGS }}
+          docker-compose restart {{ .CLI_ARGS }}
+        {{ else }}
+          docker-compose restart api
+        {{ end }}
     aliases:
       - r
       - rs
@@ -133,15 +135,33 @@ tasks:
     deps:
       - _docker_preconditions
     cmds:
-      - docker-compose logs -f app
+      - |
+        {{ if .CLI_ARGS }}
+          docker-compose logs -f {{ .CLI_ARGS }}
+        {{ else }}
+          docker-compose logs -f api
+        {{ end }}
     desc: "Show api service logs"
+    silent: true
+
+  imgs:
+    deps:
+      - _docker_preconditions
+    cmds:
+      - docker-compose images
+    desc: "Show all images"
     silent: true
 
   db:
     deps:
       - _docker_preconditions
     cmds:
-      - docker-compose exec -it mongo mongosh -u ${MONGO_INITDB_ROOT_USERNAME} -p ${MONGO_INITDB_ROOT_PASSWORD}
+      - |
+        docker-compose exec -it db \
+        mongosh \
+        mongodb://localhost:27017/${DB_NAME} \
+        -u ${DB_ROOT_USERNAME} -p ${DB_ROOT_PASSWORD} \
+        --authenticationDatabase=admin
     desc: "Connect to postgres db"
     silent: true
 

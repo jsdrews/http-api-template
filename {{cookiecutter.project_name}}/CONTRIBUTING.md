@@ -42,7 +42,7 @@ type StrictServerInterface interface {
 ```
 
 #### Running the Web API
-Run `task up` to run the web api. This will start the web api on port `$APP_PORT`.
+Run `task up` to run the web api. This will start the web api on port `$API_PORT`.
 
 #### Testing the Web API
 Run `task test` to run the web api tests. This will run the tests in the `src/server/api` folder.

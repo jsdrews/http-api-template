@@ -4,7 +4,7 @@
 package api
 
 const (
-	GoogleOAuth2Scopes = "GoogleOAuth2.Scopes"
+	BearerAuthScopes = "bearerAuth.Scopes"
 )
 
 // HealthCheck defines model for HealthCheck.
