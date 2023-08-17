@@ -1,0 +1,66 @@
+repositories:
+  - name: belofx
+    url: https://gitlab.com/api/v4/projects/29916427/packages/helm/stable
+    username: {{ requiredEnv "PERSONAL_ACCESS_TOKEN_USERNAME" }}
+    password: {{ requiredEnv "PERSONAL_ACCESS_TOKEN" }}
+  - name: emberstack
+    url: https://emberstack.github.io/helm-charts
+  - name: bitnami
+    url: https://charts.bitnami.com/bitnami
+  - name: mongodb
+    url: https://mongodb.github.io/helm-charts
+  - name: percona
+    url: https://percona.github.io/percona-helm-charts/  
+
+releases:
+
+  - name: private-registry-secrets
+    namespace: apps
+    chart: belofx/platform
+    createNamespace: true
+    set:
+      - name: dockerconfig
+        value: {{ requiredEnv "MK_PRIVATE_REGISTRY_AUTH" }}
+
+  - name: api-db
+    namespace: apps
+    createNamespace: true
+    chart: ./api-db
+    version: 1.3.10
+    wait: true
+    waitForJobs: true
+    needs:
+      - private-registry-secrets
+    set:
+      - name: username
+        value: {{ requiredEnv "DB_ROOT_USERNAME" }}
+      - name: password
+        value: {{ requiredEnv "DB_ROOT_PASSWORD" }}
+      - name: database
+        value: admin
+      - name: replicas
+        value: 1
+      - name: persistenceType
+        value: local
+      - name: compressionType
+        value: zstd
+    installed: true
+
+  - name: api
+    namespace: apps
+    createNamespace: true
+    chart: ./api-chart
+    needs:
+      - api-db
+    set:
+      - name: api.devMode
+        value: {{ requiredEnv "API_DEV_MODE" }}
+      - name: api.port
+        value: {{ requiredEnv "API_PORT" }}
+      - name: db.name
+        value: {{ requiredEnv "DB_NAME" }}
+      - name: db.auth.rootUser
+        value: {{ requiredEnv "DB_ROOT_USERNAME" }}
+      - name: db.auth.rootPassword
+        value: {{ requiredEnv "DB_ROOT_PASSWORD" }}
+  

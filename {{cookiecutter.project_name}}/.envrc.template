@@ -1,8 +1,8 @@
-export COMPOSE_PROJECT_NAME=openapi-codegen
+export COMPOSE_PROJECT_NAME={{ cookiecutter.project_name }}
 export BFX_CONTAINER_REGISTRY_URL=registry.gitlab.com/biglittletech/platform/packages
 export PERSONAL_ACCESS_TOKEN_USERNAME=$USER
 export PERSONAL_ACCESS_TOKEN=$GITLAB_TOKEN
-export MK_PRIVATE_REGISTRY_AUTH=ewoJImF1dGhzIjogewoJCSJyZWdpc3RyeS5naXRsYWIuY29tIjogewoJCQkiYXV0aCI6ICJhM1ZpWlMxd2RXeHNaWEk2VTNoSVNIaDVNVnBhYURSelUxVm9hSGw0WW04PSIKCQl9Cgl9Cn0=
+export MK_PRIVATE_REGISTRY_AUTH="<Check: Keybase -> team -> biglittle -> platform -> envs -> dockerconfigjson>"
 
 export DB_URI="mongodb://db-host:27017"
 export DB_ROOT_USERNAME=root
@@ -22,5 +22,3 @@ export CLI_DEBUG=true
 # Docker buildkit (Used for secret handling)
 export COMPOSE_DOCKER_CLI_BUILD=1
 export DOCKER_BUILDKIT=1
-
-

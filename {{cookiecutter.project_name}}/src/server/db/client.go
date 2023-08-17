@@ -8,10 +8,17 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func GetClient(uri string) (*mongo.Client, error) {
+func GetClient(uri string, username string, password string) (*mongo.Client, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
+	clientOptions := options.Client()
+	clientOptions.SetAuth(options.Credential{
+		Username: username,
+		Password: password,
+	})
+	clientOptions.SetRegistry(mongoRegistry)
+	clientOptions.ApplyURI(uri)
+	client, err := mongo.Connect(ctx, clientOptions)
 	return client, err
 }
 

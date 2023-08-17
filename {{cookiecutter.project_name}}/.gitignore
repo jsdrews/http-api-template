@@ -22,3 +22,12 @@
 *.tar
 *.gz
 *.tgz
+*.pyc
+
+build/
+.task/
+tash
+.vscode/
+bin/
+tmp
+.envrc

@@ -1,0 +1,132 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+
+  _docker_preconditions:
+    desc: "Checks for required programs"
+    preconditions:
+      - sh: command -v docker
+        msg: docker needed to run these tasks
+      - sh: command -v docker-compose
+        msg: docker-compose needed to run these tasks
+      - sh: command -v helm
+        msg: helm is needed to run these tasks
+      - sh: grep registry.gitlab.com $HOME/.docker/config.json
+        msg: docker login to registry.gitlab.com needed to run these tasks. (docker login registry.gitlab.com -u <username> -p <personal gitlab token>)
+    silent: true
+    internal: true
+
+  build-datamodel-code-generator:
+    desc: Build datamodel-code-generator
+    internal: true
+    deps:
+      - _docker_preconditions
+    cmds:
+      - docker build --tag sub-tasks/datamodel-code-generator sub-tasks/datamodel-code-generator
+    status:
+      - test $(docker images sub-tasks/datamodel-code-generator | wc -l) -gt 1
+
+  build-json-schema-faker:
+    desc: Build json-schema-faker
+    internal: true
+    deps:
+      - _docker_preconditions
+    cmds:
+      - docker build --tag sub-tasks/json-schema-faker sub-tasks/json-schema-faker
+    status:
+      - test $(docker images sub-tasks/json-schema-faker | wc -l) -gt 1
+
+  build-jq:
+    desc: Build jq
+    internal: true
+    deps:
+      - _docker_preconditions
+    cmds:
+      - docker build --tag sub-tasks/jq sub-tasks/jq
+    status:
+      - test $(docker images sub-tasks/jq | wc -l) -gt 1
+
+  build-openapi-json-schemextractor:
+    desc: Build openapi-json-schemextractor
+    internal: true
+    deps:
+      - _docker_preconditions
+    cmds:
+      - docker build --tag sub-tasks/openapi-json-schemextractor sub-tasks/openapi-json-schemextractor
+    status:
+      - test $(docker images sub-tasks/openapi-json-schemextractor | wc -l) -gt 1
+
+  build-oapi-codegen:
+    desc: Build oapi-codegen
+    internal: true
+    deps:
+      - _docker_preconditions
+    cmds:
+      - docker build --tag sub-tasks/oapi-codegen sub-tasks/oapi-codegen
+    status:
+      - test $(docker images sub-tasks/oapi-codegen | wc -l) -gt 1
+
+  openapi-json-schemextractor:
+    desc: Extract schema from api spec
+    deps:
+      - build-openapi-json-schemextractor
+    silent: true
+    cmds:
+      - |
+        docker run --rm -v \
+        $PWD/{{ .API_SPEC }}:/{{ .API_SPEC }} \
+        sub-tasks/openapi-json-schemextractor \
+        {{ .API_SPEC }}
+
+  jq:
+    desc: "Run jq on api spec"
+    deps:
+      - build-jq
+    silent: true
+    cmds:
+      - |
+        docker run --rm -i \
+        -v $PWD/{{ .ARTIFACTS_DIR }}:/{{ .ARTIFACTS_DIR }} \
+        sub-tasks/jq \
+        {{ .CLI_ARGS }}
+
+  datamodel-code-generator:
+    desc: "Generate pydantic models from api spec"
+    deps:
+      - build-datamodel-code-generator
+    silent: true
+    cmds:
+      - |
+        docker run --rm -it \
+        -v $PWD/{{ .ARTIFACTS_DIR }}:/{{ .ARTIFACTS_DIR }} \
+        sub-tasks/datamodel-code-generator \
+        {{ .CLI_ARGS }}
+  
+  json-schema-faker:
+    desc: "Generate fake data from api spec"
+    deps:
+      - build-json-schema-faker
+    silent: true
+    cmds:
+      - |
+        docker run --rm -it \
+        -v $PWD/{{ .ARTIFACTS_DIR }}:/{{ .ARTIFACTS_DIR }} \
+        sub-tasks/json-schema-faker \
+        {{ .CLI_ARGS }}
+
+  clean-subtasks:
+    desc: "Remove all images"
+    deps:
+      - _docker_preconditions
+    silent: true
+    cmds:
+      - |
+        docker rmi -f \
+        sub-tasks/datamodel-code-generator \
+        sub-tasks/json-schema-faker \
+        sub-tasks/jq \
+        sub-tasks/openapi-json-schemextractor \
+        sub-tasks/ingest \
+        sub-tasks/oapi-codegen \

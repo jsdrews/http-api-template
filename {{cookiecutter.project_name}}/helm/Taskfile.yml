@@ -1,0 +1,168 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+
+  default:
+    desc: List all tasks
+    cmds:
+      - task -a
+    silent: true
+
+  start:
+    desc: Start minikube
+    cmds:
+      - minikube start --addons=ingress #--memory='max' --cpus=4 --addons=metrics-server --addons=dashboard --addons=registry
+    # internal: true
+    silent: true
+    status:
+      - test $(minikube status | grep -i running | wc -l) -eq 3
+
+  cache:
+    desc: Cache docker images in minikube
+    dir: helm
+    internal: true
+    deps: 
+      - rmi
+    cmds:
+      - |
+        eval $(minikube docker-env --shell='bash')
+
+        docker build \
+        --build-arg VERSION={{ .VERSION }} \
+        --build-arg HTTPS_PROXY=${HTTPS_PROXY} \
+        -t ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:{{ .VERSION }} \
+        ../src/server
+
+        docker tag \
+        ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:{{ .VERSION }} \
+        ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:latest
+
+        docker build \
+        --build-arg VERSION={{ .VERSION }} \
+        --build-arg HTTPS_PROXY=${HTTPS_PROXY} \
+        -t ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:{{ .VERSION }} \
+        ../db/mongo/migrations
+
+        docker tag \
+        ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:{{ .VERSION }} \
+        ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:latest
+    silent: true
+
+  rmi:
+    desc: Remove docker images from minikube
+    cmds:
+      - cmd: |
+          eval $(minikube docker-env --shell='bash')
+          docker rmi ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:{{ .VERSION }}
+          docker rmi ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:latest
+          docker rmi ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:{{ .VERSION }}
+          docker rmi ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:latest
+        ignore_error: true
+    silent: true
+    internal: true
+
+  install_mongo_operator:
+    dir: helm
+    cmds:
+      - |
+        helm upgrade --install mongo-operator mongodb/community-operator \
+          --namespace apps \
+          --create-namespace \
+          --version 0.7.5 \
+          --wait \
+          --wait-for-jobs
+    internal: true
+    silent: true
+    status:
+      - test $(kubectl get all -n apps | grep mongodb-kubernetes-operator | wc -l) -eq 3
+
+  imgs:
+    desc: List all docker images
+    cmds:
+      - |
+        eval $(minikube docker-env --shell='bash')
+        docker images {{ .CLI_ARGS }}
+    silent: true
+
+  show:
+    desc: Get all releases
+    cmds:
+      - |
+        {{ if .CLI_ARGS }}
+        kubectl get {{ .CLI_ARGS }}
+        {{ else }}
+        kubectl get all -A
+        {{ end }}
+    silent: true
+
+  list:
+    desc: List all releases
+    dir: helm
+    alises:
+      - ls
+    cmds:
+      - helmfile list
+    silent: true
+
+  logs:
+    desc: Show logs of a release
+    dir: helm
+    cmds:
+      - kubectl logs {{ .CLI_ARGS }}
+    silent: true
+
+  status:
+    desc: Show status of all releases
+    dir: helm
+    cmds:
+      - helmfile status
+    silent: true
+
+  up:
+    desc: Bring up minikube and install all charts
+    deps:
+      - start
+    dir: helm
+    cmds:
+      - task: install_mongo_operator
+      - task: install
+    silent: true
+
+  tunnel:
+    desc: Create tunnel to minikube
+    cmds:
+      - minikube tunnel
+    interactive: true
+    silent: true
+
+  install:
+    desc: Install all charts
+    dir: helm
+    deps:
+      - cache
+    cmds:
+      - helmfile apply
+    silent: true
+
+  uninstall:
+    desc: Uninstall all charts
+    dir: helm
+    cmds:
+      - helmfile destroy
+    silent: true
+
+  down:
+    desc: Bring down minikube
+    cmds:
+      - minikube stop
+    silent: true
+    status:
+      - test $(minikube status | grep -i stopped | wc -l) -eq 4
+
+  purge:
+    desc: Run minikube delete
+    cmds:
+      - minikube delete
+    silent: true
