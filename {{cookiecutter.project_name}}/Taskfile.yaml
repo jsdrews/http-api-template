@@ -83,25 +83,25 @@ tasks:
         docker build \
         --build-arg VERSION={{ .VERSION }} \
         --build-arg HTTPS_PROXY=${HTTPS_PROXY} \
-        -t ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:{{ .VERSION }} \
+        -t ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:{{ .VERSION }} \
         src/server
       - |
         docker tag \
-        ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:{{ .VERSION }} \
-        ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:latest
+        ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:{{ .VERSION }} \
+        ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:latest
       - |
         docker build \
         --build-arg VERSION={{ .VERSION }} \
         --build-arg HTTPS_PROXY=${HTTPS_PROXY} \
-        -t ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:{{ .VERSION }} \
+        -t ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:{{ .VERSION }} \
         db/mongo/migrations
       - |
         docker tag \
-        ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:{{ .VERSION }} \
-        ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:latest
+        ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:{{ .VERSION }} \
+        ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:latest
     desc: "Build all services"
     status:
-      - test $(docker images ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME} | wc -l) -gt 1
+      - test $(docker images ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME} | wc -l) -gt 1
     silent: true
 
   build-helm:
@@ -126,10 +126,10 @@ tasks:
     deps:
       - build
     cmds:
-      - docker push ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:{{ .VERSION }}
-      - docker push ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:latest
-      - docker push ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:{{ .VERSION }}
-      - docker push ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:latest
+      - docker push ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:{{ .VERSION }}
+      - docker push ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:latest
+      - docker push ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:{{ .VERSION }}
+      - docker push ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:latest
       - |
         export HELM_EXPERIMENTAL_OCI=1
         curl --request POST \
@@ -151,13 +151,13 @@ tasks:
     deps:
       - sub-tasks:_docker_preconditions
     cmds:
-      - docker rmi ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:{{ .VERSION }}
-      - docker rmi ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:latest
-      - docker rmi ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:{{ .VERSION }}
-      - docker rmi ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:latest
+      - docker rmi ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:{{ .VERSION }}
+      - docker rmi ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:latest
+      - docker rmi ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:{{ .VERSION }}
+      - docker rmi ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:latest
       - rm -f build/$COMPOSE_PROJECT_NAME-{{ .VERSION }}.tgz
     status:
-      - test $(docker images ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME} | wc -l) -eq 1
+      - test $(docker images ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME} | wc -l) -eq 1
     silent: true
     desc: "Remove all images"
 

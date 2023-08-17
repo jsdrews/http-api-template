@@ -22,7 +22,7 @@ services:
       - network
 
   db-migrations:
-    image: ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations
+    image: ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations
     depends_on:
       - db
     working_dir: /mongo_migrations
@@ -37,7 +37,7 @@ services:
       - network
 
   api:
-    image: ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}
+    image: ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}
     hostname: api-host
     privileged: true
     working_dir: /code

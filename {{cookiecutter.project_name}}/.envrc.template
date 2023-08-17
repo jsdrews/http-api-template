@@ -1,7 +1,7 @@
 export COMPOSE_PROJECT_NAME={{ cookiecutter.project_name }}
-export BFX_CONTAINER_REGISTRY_URL=registry.gitlab.com/biglittletech/platform/packages
+export IMAGE_REGISTRY_URL=$IMAGE_REGISTRY_URL
 export PERSONAL_ACCESS_TOKEN_USERNAME=$USER
-export PERSONAL_ACCESS_TOKEN=$GITLAB_TOKEN
+export PERSONAL_ACCESS_TOKEN=$PERSONAL_ACCESS_TOKEN
 export MK_PRIVATE_REGISTRY_AUTH="<Check: Keybase -> team -> biglittle -> platform -> envs -> dockerconfigjson>"
 
 export DB_URI="mongodb://db-host:27017"

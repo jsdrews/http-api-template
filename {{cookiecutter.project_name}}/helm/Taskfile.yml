@@ -32,22 +32,22 @@ tasks:
         docker build \
         --build-arg VERSION={{ .VERSION }} \
         --build-arg HTTPS_PROXY=${HTTPS_PROXY} \
-        -t ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:{{ .VERSION }} \
+        -t ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:{{ .VERSION }} \
         ../src/server
 
         docker tag \
-        ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:{{ .VERSION }} \
-        ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:latest
+        ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:{{ .VERSION }} \
+        ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:latest
 
         docker build \
         --build-arg VERSION={{ .VERSION }} \
         --build-arg HTTPS_PROXY=${HTTPS_PROXY} \
-        -t ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:{{ .VERSION }} \
+        -t ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:{{ .VERSION }} \
         ../db/mongo/migrations
 
         docker tag \
-        ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:{{ .VERSION }} \
-        ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:latest
+        ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:{{ .VERSION }} \
+        ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:latest
     silent: true
 
   rmi:
@@ -55,10 +55,10 @@ tasks:
     cmds:
       - cmd: |
           eval $(minikube docker-env --shell='bash')
-          docker rmi ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:{{ .VERSION }}
-          docker rmi ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:latest
-          docker rmi ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:{{ .VERSION }}
-          docker rmi ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:latest
+          docker rmi ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:{{ .VERSION }}
+          docker rmi ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:latest
+          docker rmi ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:{{ .VERSION }}
+          docker rmi ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:latest
         ignore_error: true
     silent: true
     internal: true
