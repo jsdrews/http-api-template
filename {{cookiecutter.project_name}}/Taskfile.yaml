@@ -3,9 +3,15 @@
 version: '3'
 
 vars:
-  API_SPEC: src/api.yaml
+  VERSION: 1.0.0
+  API_SPEC: openapi.yaml
   SERVER_DIR: src/server
   CLIENTS_DIR: src/clients
+  ARTIFACTS_DIR: build
+
+includes:
+  sub-tasks: sub-tasks
+  mk: helm
 
 tasks:
   default:
@@ -14,37 +20,28 @@ tasks:
     desc: "List all tasks"
     silent: true
 
-  _docker_preconditions:
-    desc: "Checks for required programs"
-    preconditions:
-      - sh: command -v docker
-        msg: docker needed to run these tasks
-      - sh: command -v docker-compose
-        msg: docker-compose needed to run these tasks
-    silent: true
-    internal: true
-
   generate-server:
     aliases:
       - gen-server
       - gen
+    deps:
+      - sub-tasks:build-oapi-codegen
     cmds:
       - |
-        oapi-codegen \
-        -config {{ .SERVER_DIR }}/api/oapi-codegen-server-cfg.yaml \
-        -o {{ .SERVER_DIR }}/api/api.go \
-        {{ .API_SPEC }}
+        docker run --rm \
+        -v $PWD:/work \
+        sub-tasks/oapi-codegen \
+        -config /work/{{ .SERVER_DIR }}/api/oapi-codegen-server-cfg.yaml \
+        -o /work/{{ .SERVER_DIR }}/api/api.go \
+        /work/{{ .API_SPEC }}
       - |
-        oapi-codegen \
-        -config {{ .SERVER_DIR }}/api/oapi-codegen-types-cfg.yaml \
-        -o {{ .SERVER_DIR }}/api/types.go \
-        {{ .API_SPEC }}
+        docker run --rm \
+        -v $PWD:/work \
+        sub-tasks/oapi-codegen \
+        -config /work/{{ .SERVER_DIR }}/api/oapi-codegen-types-cfg.yaml \
+        -o /work/{{ .SERVER_DIR }}/api/types.go \
+        /work/{{ .API_SPEC }}
     desc: "Generate code from openapi spec"
-    preconditions:
-      - sh: command -v go
-        msg: go needed to run these tasks
-      - sh: command -v oapi-codegen
-        msg: oapi-codegen needed to run these tasks. (go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest)
     silent: true
   
   generate-client:
@@ -52,16 +49,16 @@ tasks:
       - gen-client
       - genc
     deps:
-      - _docker_preconditions
+      - sub-tasks:sub-tasks:_docker_preconditions
     cmds:
       - |
         {{ if .CLI_ARGS }}
 
         docker run --rm \
-        -v $PWD/{{ .API_SPEC }}:/api.yaml \
+        -v $PWD/{{ .API_SPEC }}:/openapi.yaml \
         -v $PWD/{{ .CLIENTS_DIR }}/{{ .CLI_ARGS }}:/generated \
         openapitools/openapi-generator-cli generate \
-        -i /api.yaml \
+        -i /openapi.yaml \
         -g {{ .CLI_ARGS }} \
         -o /generated
 
@@ -77,18 +74,112 @@ tasks:
     desc: "Generate client code from openapi spec"
     silent: true
 
+  build:
+    deps:
+      - sub-tasks:_docker_preconditions
+      - generate-server
+    cmds:
+      - |
+        docker build \
+        --build-arg VERSION={{ .VERSION }} \
+        --build-arg HTTPS_PROXY=${HTTPS_PROXY} \
+        -t ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:{{ .VERSION }} \
+        src/server
+      - |
+        docker tag \
+        ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:{{ .VERSION }} \
+        ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:latest
+      - |
+        docker build \
+        --build-arg VERSION={{ .VERSION }} \
+        --build-arg HTTPS_PROXY=${HTTPS_PROXY} \
+        -t ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:{{ .VERSION }} \
+        db/mongo/migrations
+      - |
+        docker tag \
+        ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:{{ .VERSION }} \
+        ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:latest
+    desc: "Build all services"
+    status:
+      - test $(docker images ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME} | wc -l) -gt 1
+    silent: true
+
+  build-helm:
+    deps:
+      - sub-tasks:_docker_preconditions
+    cmds:
+      - |
+        helm dep update ./helm/$COMPOSE_PROJECT_NAME
+        sed "s/\&version .*/\&version {{ .VERSION }}/g" helm/$COMPOSE_PROJECT_NAME/Chart.yaml > /tmp/tmp-Chart.yaml
+        rsync -a /tmp/tmp-Chart.yaml helm/$COMPOSE_PROJECT_NAME/Chart.yaml
+        rm -rf /tmp/tmp-Chart.yaml
+        helm package ./helm/$COMPOSE_PROJECT_NAME --version {{ .VERSION }} -d build/
+        helm lint ./helm/$COMPOSE_PROJECT_NAME
+        echo
+        echo "Generated helm chart at build/$COMPOSE_PROJECT_NAME-{{ .VERSION }}.tgz"
+    desc: "Build helm chart"
+    status:
+      - test -f build/$COMPOSE_PROJECT_NAME-{{ .VERSION }}.tgz
+    silent: true
+
+  publish:
+    deps:
+      - build
+    cmds:
+      - docker push ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:{{ .VERSION }}
+      - docker push ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:latest
+      - docker push ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:{{ .VERSION }}
+      - docker push ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:latest
+      - |
+        export HELM_EXPERIMENTAL_OCI=1
+        curl --request POST \
+            --form "chart=@build/$COMPOSE_PROJECT_NAME-{{ .VERSION }}.tgz" \
+            --user $PERSONAL_ACCESS_TOKEN_USERNAME:$PERSONAL_ACCESS_TOKEN \
+            https://gitlab.com/api/v4/projects/29916427/packages/helm/api/stable/charts
+    desc: "Publish all images"
+    silent: true
+
+  imgs:
+    deps:
+      - sub-tasks:_docker_preconditions
+    cmds:
+      - docker images | grep $COMPOSE_PROJECT_NAME
+    desc: "Show all images"
+    silent: true
+
+  rmi:
+    deps:
+      - sub-tasks:_docker_preconditions
+    cmds:
+      - docker rmi ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:{{ .VERSION }}
+      - docker rmi ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:latest
+      - docker rmi ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:{{ .VERSION }}
+      - docker rmi ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations:latest
+      - rm -f build/$COMPOSE_PROJECT_NAME-{{ .VERSION }}.tgz
+    status:
+      - test $(docker images ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME} | wc -l) -eq 1
+    silent: true
+    desc: "Remove all images"
+
   up:
     deps:
-      - generate-server
-      - _docker_preconditions
+      - build
     cmds:
       - docker-compose up -d
       - |
         # Wait for the server to start
+        COUNTER=0
         until curl -s -f -o /dev/null localhost:$API_PORT/api/v1/health
         do
+          if [ $COUNTER -gt 30 ]; then
+            echo "api failed to start"
+            exit 1
+          fi
+
           echo "Waiting for api to start..."
+          COUNTER=$((COUNTER+1))
           sleep 2
+          
         done
       - echo api is running at http://localhost:$API_PORT
       - echo swagger ui is running at http://localhost:$SWAGGER_PORT
@@ -100,7 +191,7 @@ tasks:
 
   down:
     deps:
-      - _docker_preconditions
+      - sub-tasks:_docker_preconditions
     cmds:
       - docker-compose down
     desc: "Bring down all services"
@@ -109,7 +200,7 @@ tasks:
   restart:
     deps:
       - generate-server
-      - _docker_preconditions
+      - sub-tasks:_docker_preconditions
     cmds:
       - |
         {{ if .CLI_ARGS }}
@@ -125,7 +216,7 @@ tasks:
 
   ps:
     deps:
-      - _docker_preconditions
+      - sub-tasks:_docker_preconditions
     cmds:
       - docker-compose ps
     desc: "Show all services"
@@ -133,7 +224,7 @@ tasks:
 
   logs:
     deps:
-      - _docker_preconditions
+      - sub-tasks:_docker_preconditions
     cmds:
       - |
         {{ if .CLI_ARGS }}
@@ -144,32 +235,40 @@ tasks:
     desc: "Show api service logs"
     silent: true
 
-  imgs:
-    deps:
-      - _docker_preconditions
-    cmds:
-      - docker-compose images
-    desc: "Show all images"
-    silent: true
-
   db:
     deps:
-      - _docker_preconditions
+      - sub-tasks:_docker_preconditions
     cmds:
       - |
         docker-compose exec -it db \
         mongosh \
         mongodb://localhost:27017/${DB_NAME} \
+        --authenticationDatabase=admin \
         -u ${DB_ROOT_USERNAME} -p ${DB_ROOT_PASSWORD} \
-        --authenticationDatabase=admin
     desc: "Connect to postgres db"
+    silent: true
+
+  db-remote:
+    deps:
+      - sub-tasks:_docker_preconditions
+    cmds:
+      - |
+        docker run \
+        --rm -it --network host \
+        mongo mongosh \
+        "${DB_URI}" \
+        --apiVersion 1 \
+        --authenticationDatabase=admin \
+        -u ${DB_ROOT_USERNAME} -p ${DB_ROOT_PASSWORD} \
+    desc: "Connect to mongo atlas db"
     silent: true
 
   purge:
     deps:
-      - _docker_preconditions
+      - sub-tasks:_docker_preconditions
     cmds:
       - docker-compose down -v --rmi local
+      - task: rmi
     aliases:
       - rm
     desc: "Bring down all services and remove volumes and images"
@@ -179,7 +278,7 @@ tasks:
 
   mock:
     deps:
-      - _docker_preconditions
+      - sub-tasks:_docker_preconditions
     cmds:
       - docker-compose up -d mockserver
       - echo
@@ -189,7 +288,7 @@ tasks:
 
   edit:
     deps:
-      - _docker_preconditions
+      - sub-tasks:_docker_preconditions
     cmds:
       - docker compose up -d swagger-editor
       - echo
@@ -203,9 +302,9 @@ tasks:
     cmds:
       - |
         docker run --rm \
-        -v $PWD/{{ .API_SPEC }}:/api.yaml \
+        -v $PWD/{{ .API_SPEC }}:/openapi.yaml \
         --network host schemathesis/schemathesis:stable \
-        run /api.yaml --base-url http://localhost:8888/api/v1
+        run /openapi.yaml --base-url http://localhost:8888/api/v1
       # - go test -v ./...
     desc: "Run api tests"
     silent: true

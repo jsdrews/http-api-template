@@ -1,6 +1,7 @@
 {
     "project_name": "openapi-codegen",
     "_copy_without_render": [
-        "Taskfile.yaml"
+        "Taskfile.yaml",
+        "helm/"
     ]
 }

@@ -25,12 +25,9 @@ type ServerInterface interface {
 	// Server Health Check
 	// (GET /health)
 	GetHealth(c *gin.Context)
-	// Get Users
-	// (GET /users)
-	GetUsers(c *gin.Context, params GetUsersParams)
-	// Add Users
-	// (POST /users)
-	AddUsers(c *gin.Context)
+	// Get API Version
+	// (GET /version)
+	GetVersion(c *gin.Context)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -55,37 +52,8 @@ func (siw *ServerInterfaceWrapper) GetHealth(c *gin.Context) {
 	siw.Handler.GetHealth(c)
 }
 
-// GetUsers operation middleware
-func (siw *ServerInterfaceWrapper) GetUsers(c *gin.Context) {
-
-	var err error
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params GetUsersParams
-
-	// ------------- Optional query parameter "offset" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "offset", c.Request.URL.Query(), &params.Offset)
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter offset: %s", err), http.StatusBadRequest)
-		return
-	}
-
-	// ------------- Optional query parameter "limit" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "limit", c.Request.URL.Query(), &params.Limit)
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter limit: %s", err), http.StatusBadRequest)
-		return
-	}
-
-	// ------------- Optional query parameter "sort" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "sort", c.Request.URL.Query(), &params.Sort)
-	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter sort: %s", err), http.StatusBadRequest)
-		return
-	}
+// GetVersion operation middleware
+func (siw *ServerInterfaceWrapper) GetVersion(c *gin.Context) {
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
@@ -94,22 +62,7 @@ func (siw *ServerInterfaceWrapper) GetUsers(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.GetUsers(c, params)
-}
-
-// AddUsers operation middleware
-func (siw *ServerInterfaceWrapper) AddUsers(c *gin.Context) {
-
-	c.Set(BearerAuthScopes, []string{})
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.AddUsers(c)
+	siw.Handler.GetVersion(c)
 }
 
 // GinServerOptions provides options for the Gin server.
@@ -140,8 +93,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	}
 
 	router.GET(options.BaseURL+"/health", wrapper.GetHealth)
-	router.GET(options.BaseURL+"/users", wrapper.GetUsers)
-	router.POST(options.BaseURL+"/users", wrapper.AddUsers)
+	router.GET(options.BaseURL+"/version", wrapper.GetVersion)
 }
 
 type GetHealthRequestObject struct {
@@ -160,79 +112,47 @@ func (response GetHealth200JSONResponse) VisitGetHealthResponse(w http.ResponseW
 	return json.NewEncoder(w).Encode(response)
 }
 
-type GetHealth500Response struct {
-}
+type GetHealth500JSONResponse ServerError
 
-func (response GetHealth500Response) VisitGetHealthResponse(w http.ResponseWriter) error {
+func (response GetHealth500JSONResponse) VisitGetHealthResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
-	return nil
+
+	return json.NewEncoder(w).Encode(response)
 }
 
-type GetHealth503Response struct {
-}
+type GetHealth503JSONResponse ServerError
 
-func (response GetHealth503Response) VisitGetHealthResponse(w http.ResponseWriter) error {
+func (response GetHealth503JSONResponse) VisitGetHealthResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(503)
-	return nil
+
+	return json.NewEncoder(w).Encode(response)
 }
 
-type GetUsersRequestObject struct {
-	Params GetUsersParams
+type GetVersionRequestObject struct {
 }
 
-type GetUsersResponseObject interface {
-	VisitGetUsersResponse(w http.ResponseWriter) error
+type GetVersionResponseObject interface {
+	VisitGetVersionResponse(w http.ResponseWriter) error
 }
 
-type GetUsers200JSONResponse Users
+type GetVersion200JSONResponse VersionCheck
 
-func (response GetUsers200JSONResponse) VisitGetUsersResponse(w http.ResponseWriter) error {
+func (response GetVersion200JSONResponse) VisitGetVersionResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AddUsersRequestObject struct {
-	Body *AddUsersJSONRequestBody
-}
+type GetVersion500JSONResponse ServerError
 
-type AddUsersResponseObject interface {
-	VisitAddUsersResponse(w http.ResponseWriter) error
-}
-
-type AddUsers200JSONResponse UsersAdded
-
-func (response AddUsers200JSONResponse) VisitAddUsersResponse(w http.ResponseWriter) error {
+func (response GetVersion500JSONResponse) VisitGetVersionResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AddUsers400Response struct {
-}
-
-func (response AddUsers400Response) VisitAddUsersResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
-	return nil
-}
-
-type AddUsers401JSONResponse UnauthorizedError
-
-func (response AddUsers401JSONResponse) VisitAddUsersResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/problem+json")
-	w.WriteHeader(401)
-
-	return json.NewEncoder(w).Encode(response)
-}
-
-type AddUsers500Response struct {
-}
-
-func (response AddUsers500Response) VisitAddUsersResponse(w http.ResponseWriter) error {
 	w.WriteHeader(500)
-	return nil
+
+	return json.NewEncoder(w).Encode(response)
 }
 
 // StrictServerInterface represents all server handlers.
@@ -240,12 +160,9 @@ type StrictServerInterface interface {
 	// Server Health Check
 	// (GET /health)
 	GetHealth(ctx context.Context, request GetHealthRequestObject) (GetHealthResponseObject, error)
-	// Get Users
-	// (GET /users)
-	GetUsers(ctx context.Context, request GetUsersRequestObject) (GetUsersResponseObject, error)
-	// Add Users
-	// (POST /users)
-	AddUsers(ctx context.Context, request AddUsersRequestObject) (AddUsersResponseObject, error)
+	// Get API Version
+	// (GET /version)
+	GetVersion(ctx context.Context, request GetVersionRequestObject) (GetVersionResponseObject, error)
 }
 
 type StrictHandlerFunc = runtime.StrictGinHandlerFunc
@@ -285,17 +202,15 @@ func (sh *strictHandler) GetHealth(ctx *gin.Context) {
 	}
 }
 
-// GetUsers operation middleware
-func (sh *strictHandler) GetUsers(ctx *gin.Context, params GetUsersParams) {
-	var request GetUsersRequestObject
-
-	request.Params = params
+// GetVersion operation middleware
+func (sh *strictHandler) GetVersion(ctx *gin.Context) {
+	var request GetVersionRequestObject
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.GetUsers(ctx, request.(GetUsersRequestObject))
+		return sh.ssi.GetVersion(ctx, request.(GetVersionRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "GetUsers")
+		handler = middleware(handler, "GetVersion")
 	}
 
 	response, err := handler(ctx, request)
@@ -303,41 +218,8 @@ func (sh *strictHandler) GetUsers(ctx *gin.Context, params GetUsersParams) {
 	if err != nil {
 		ctx.Error(err)
 		ctx.Status(http.StatusInternalServerError)
-	} else if validResponse, ok := response.(GetUsersResponseObject); ok {
-		if err := validResponse.VisitGetUsersResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
-		}
-	} else if response != nil {
-		ctx.Error(fmt.Errorf("Unexpected response type: %T", response))
-	}
-}
-
-// AddUsers operation middleware
-func (sh *strictHandler) AddUsers(ctx *gin.Context) {
-	var request AddUsersRequestObject
-
-	var body AddUsersJSONRequestBody
-	if err := ctx.ShouldBind(&body); err != nil {
-		ctx.Status(http.StatusBadRequest)
-		ctx.Error(err)
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.AddUsers(ctx, request.(AddUsersRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "AddUsers")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
-	} else if validResponse, ok := response.(AddUsersResponseObject); ok {
-		if err := validResponse.VisitAddUsersResponse(ctx.Writer); err != nil {
+	} else if validResponse, ok := response.(GetVersionResponseObject); ok {
+		if err := validResponse.VisitGetVersionResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {
@@ -348,24 +230,18 @@ func (sh *strictHandler) AddUsers(ctx *gin.Context) {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"fwkAAP//NGCRDZ0HAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

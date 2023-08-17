@@ -3,8 +3,8 @@ version: '3.2'
 services:
 
   db:
-    image: mongo
-    hostname: ${DB_HOSTNAME}
+    image: mongo:4.2.6
+    hostname: db-host
     privileged: true
     volumes:
       - mongo-data:/data/db
@@ -13,7 +13,7 @@ services:
         target: /etc/mongod.conf
     expose:
       - "27017"
-    command: [ "-f",  "/etc/mongod.conf" ]
+    command: [ "-f", "/etc/mongod.conf" ]
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${DB_ROOT_USERNAME}
       - MONGO_INITDB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
@@ -21,9 +21,23 @@ services:
     networks:
       - network
 
+  db-migrations:
+    image: ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}-mongo-migrations
+    depends_on:
+      - db
+    working_dir: /mongo_migrations
+    volumes:
+      - ./db/mongo/migrations/migrations:/mongo_migrations/migrations
+    environment:
+      DB_URI: ${DB_URI}
+      DB_NAME: ${DB_NAME}
+      DB_ROOT_USERNAME: ${DB_ROOT_USERNAME}
+      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    networks:
+      - network
+
   api:
-    image: golang:1.20
-    # build: src/server
+    image: ${BFX_CONTAINER_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}
     hostname: api-host
     privileged: true
     working_dir: /code
@@ -37,7 +51,7 @@ services:
     environment:
       - API_PORT=${API_PORT}
       - API_DEV_MODE=${API_DEV_MODE}
-      - DB_HOSTNAME=${DB_HOSTNAME}
+      - DB_URI=${DB_URI}
       - DB_ROOT_USERNAME=${DB_ROOT_USERNAME}
       - DB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
       - DB_NAME=${DB_NAME}
@@ -49,29 +63,30 @@ services:
     privileged: true
     volumes:
       - type: bind
-        source: ./src/api.yaml
-        target: /etc/api.yaml
+        source: ./openapi.yaml
+        target: /etc/openapi.yaml
     ports:
       - "${SWAGGER_PORT}:8080"
     environment:
-      - SWAGGER_FILE=/etc/api.yaml
+      - SWAGGER_FILE=/etc/openapi.yaml
 
   mockserver:
     image: danielgtaylor/apisprout
     privileged: true
     volumes:
       - type: bind
-        source: ./src/api.yaml
-        target: /etc/api.yaml
+        source: ./openapi.yaml
+        target: /etc/openapi.yaml
     ports:
       - "${MOCKSERVER_PORT}:8000"
-    entrypoint: 
+    entrypoint:
       - "apisprout"
       - "--validate-server"
-      - "/etc/api.yaml"
+      - "/etc/openapi.yaml"
 
 networks:
   network:
+
 
 volumes:
   mongo-data:

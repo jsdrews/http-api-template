@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"context"
-	"fmt"
+	"time"
 
 	"server-api/api"
 
@@ -11,14 +11,22 @@ import (
 
 func (s Server) GetHealth(ctx context.Context, request api.GetHealthRequestObject) (api.GetHealthResponseObject, error) {
 	var result bson.M
-	err := s.DB.RunCommand(context.TODO(), bson.M{"dbStats": 1}).Decode(&result)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	err := s.DB.RunCommand(ctx, bson.M{"dbStats": 1}).Decode(&result)
 	if err != nil {
-		return api.GetHealth500Response{}, err
+		return api.GetHealth500JSONResponse{
+			Error: err.Error(),
+		}, nil
 	}
 
 	// Check if the database is healthy
-	if result["ok"] != 1.0 {
-		return api.GetHealth503Response{}, fmt.Errorf("database is not healthy")
+	_, found := result["ok"]
+	if !found {
+		s.Logger.Error("database is not healthy: %v", result)
+		return api.GetHealth503JSONResponse{
+			Error: "database is not healthy",
+		}, nil
 	}
 
 	// Report back success

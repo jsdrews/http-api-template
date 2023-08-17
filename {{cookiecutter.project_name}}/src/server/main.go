@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"server-api/api"
 	"server-api/auth"
@@ -17,11 +18,12 @@ import (
 type AppEnv struct {
 	// Port is the port number to listen on
 	Port       string `env:"API_PORT" envDefault:"8888"`
-	DBHostname string `env:"DB_HOSTNAME,required"`
+	DBUri      string `env:"DB_URI"`
 	DBUsername string `env:"DB_ROOT_USERNAME,required"`
 	DBPassword string `env:"DB_ROOT_PASSWORD,required"`
 	DBName     string `env:"DB_NAME,required"`
 	DevMode    bool   `env:"API_DEV_MODE", envDefault:"false"`
+	ApiVersion string `env:"API_VERSION", envDefault:"0.0.0"`
 }
 
 func main() {
@@ -33,8 +35,7 @@ func main() {
 	}
 
 	// DB connection
-	clientUri := fmt.Sprintf("mongodb://%s:%s@%s:27017", appEnv.DBUsername, appEnv.DBPassword, appEnv.DBHostname)
-	client, err := db.GetClient(clientUri)
+	client, err := db.GetClient(appEnv.DBUri, appEnv.DBUsername, appEnv.DBPassword)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -70,9 +71,21 @@ func main() {
 		c.JSON(404, gin.H{"code": "PAGE_NOT_FOUND", "message": "Page not found"})
 	})
 
+	// Handle logging
+	appLogger := controllers.AppLogger{
+		InfoLogger:    log.New(os.Stdout, "[API] INFO: ", log.Ldate|log.Ltime|log.Lshortfile),
+		WarningLogger: log.New(os.Stdout, "[API] WARNING: ", log.Ldate|log.Ltime|log.Lshortfile),
+		ErrorLogger:   log.New(os.Stdout, "[API] ERROR: ", log.Ldate|log.Ltime|log.Lshortfile),
+	}
+	appLogger.Info("Connected to DB at uri: %s", appEnv.DBUri)
+
 	// V1 API
 	v1 := r.Group("/api/v1")
-	server := controllers.Server{DB: db}
+	server := controllers.Server{
+		ApiVersion: appEnv.ApiVersion,
+		DB:         db,
+		Logger:     &appLogger,
+	}
 	options := api.GinServerOptions{}
 	// Create a StrictServer with the API config
 	ssi := api.NewStrictHandler(server, []api.StrictMiddlewareFunc{})
