@@ -4,7 +4,7 @@ version: '3'
 
 vars:
   VERSION: 1.0.0
-  API_SPEC: src/openapi.yaml
+  API_SPEC: openapi.yaml
   SERVER_DIR: src/server
   CLIENTS_DIR: src/clients
   ARTIFACTS_DIR: build
