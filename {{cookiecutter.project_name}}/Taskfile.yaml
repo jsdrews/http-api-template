@@ -308,3 +308,37 @@ tasks:
       # - go test -v ./...
     desc: "Run api tests"
     silent: true
+
+  extract-schema:
+    desc: "Extract json schema from openapi spec"
+    silent: true
+    cmds:
+      - mkdir -p {{ .ARTIFACTS_DIR }}
+      - |
+        task sub-tasks:openapi-json-schemextractor -- > {{ .ARTIFACTS_DIR }}/api-jsonschema.json
+      - |
+        cat {{ .ARTIFACTS_DIR }}/api-jsonschema.json | \
+        task sub-tasks:jq -- '.{{ .CLI_ARGS }} + { title: "{{ .CLI_ARGS }}" }' \
+        > {{ .ARTIFACTS_DIR }}/{{ .CLI_ARGS }}.json
+        echo
+        echo {{ .ARTIFACTS_DIR }}/{{ .CLI_ARGS }}.json generated
+    preconditions:
+      - sh: test {{ .CLI_ARGS }}
+        msg: Please specify the element name
+
+  extract-pydantic:
+    desc: "Extract pydantic model from json schema"
+    silent: true
+    deps:
+      - extract-schema
+    cmds:
+      - |
+        task sub-tasks:datamodel-code-generator -- \
+        --input-file-type jsonschema \
+        --input {{ .ARTIFACTS_DIR }}/{{ .CLI_ARGS }}.json \
+        --output {{ .ARTIFACTS_DIR }}/{{ .CLI_ARGS }}.py
+        echo
+        echo {{ .ARTIFACTS_DIR }}/{{ .CLI_ARGS }}.py generated
+    preconditions:
+      - sh: test {{ .CLI_ARGS }}
+        msg: Please specify the element name
