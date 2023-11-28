@@ -1,8 +1,4 @@
 repositories:
-  - name: belofx
-    url: https://gitlab.com/api/v4/projects/29916427/packages/helm/stable
-    username: {{ requiredEnv "PERSONAL_ACCESS_TOKEN_USERNAME" }}
-    password: {{ requiredEnv "PERSONAL_ACCESS_TOKEN" }}
   - name: emberstack
     url: https://emberstack.github.io/helm-charts
   - name: bitnami
@@ -13,15 +9,6 @@ repositories:
     url: https://percona.github.io/percona-helm-charts/  
 
 releases:
-
-  - name: private-registry-secrets
-    namespace: apps
-    chart: belofx/platform
-    createNamespace: true
-    set:
-      - name: dockerconfig
-        value: {{ requiredEnv "MK_PRIVATE_REGISTRY_AUTH" }}
-
   - name: api-db
     namespace: apps
     createNamespace: true

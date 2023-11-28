@@ -3,7 +3,7 @@ version: '3.2'
 services:
 
   db:
-    image: mongo:4.2.6
+    image: mongo:latest
     hostname: db-host
     privileged: true
     volumes:

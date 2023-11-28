@@ -18,7 +18,7 @@ Everything is centered around the api spec. Make changes to the api spec to refl
 If you need to run the full web api, you can run `task up` which will run the web api at address: `localhost:$API_PORT`.
 
 ### OpenAPI Specification
-The openapi specification is located in the root of the src folder (`src`) and is called `openapi.yaml`. This file is used to generate the web api.
+The openapi specification is located in the root of the project and is called `openapi.yaml`. This file is used to generate the web api.
 
 #### Editing the OpenAPI Specification
 Run `task edit` to run the editor. Paste `http://localhost:$SWAGGER_PORT` into the browser to edit the api spec. Save & overwrite the `openapi.yaml` file to update the api (this can be done in the editor).
@@ -32,7 +32,7 @@ Run `task up` to run the web api. This will start the web api on port `$API_PORT
 ## Backend Development
 
 ### OpenAPI Specification
-The openapi specification is located in the root of the src folder (`src`) and is called `openapi.yaml`. This file is used to generate the web api.
+The openapi specification is located in the root of the project and is called `openapi.yaml`. This file is used to generate the web api.
 
 #### Editing the OpenAPI Specification
 Run `task edit` to run the editor. Paste `http://localhost:$SWAGGER_PORT` into the browser to edit the api spec. Save & overwrite the `openapi.yaml` file to update the api (this can be done in the editor).
