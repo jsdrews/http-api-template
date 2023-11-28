@@ -2,7 +2,7 @@ export COMPOSE_PROJECT_NAME={{ cookiecutter.project_name }}
 export IMAGE_REGISTRY_URL=$IMAGE_REGISTRY_URL
 export PERSONAL_ACCESS_TOKEN_USERNAME=$USER
 export PERSONAL_ACCESS_TOKEN=$PERSONAL_ACCESS_TOKEN
-export MK_PRIVATE_REGISTRY_AUTH="<Check: Keybase -> team -> biglittle -> platform -> envs -> dockerconfigjson>"
+export MK_PRIVATE_REGISTRY_AUTH="<add key here>"
 
 export DB_URI="mongodb://db-host:27017"
 export DB_ROOT_USERNAME=root
