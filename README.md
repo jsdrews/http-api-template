@@ -1,8 +1,8 @@
 This is a template for a web api project. It uses the following technologies:
 
 - [Go](https://golang.org/)
+- [oapi-codegen](https://github.com/deepmap/oapi-codegen)
 - [OpenAPI](https://swagger.io/specification/)
-- [Swagger](https://swagger.io/)
 - [Docker](https://www.docker.com/)
 - [Task](https://taskfile.dev/#/)
 - [MockServer](https://www.mock-server.com/)
