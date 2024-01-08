@@ -7,6 +7,7 @@ This is a template for a web api project. It uses the following technologies:
 - [Task](https://taskfile.dev/#/)
 - [MockServer](https://www.mock-server.com/)
 - [Schemathesis](https://schemathesis.readthedocs.io/en/stable/index.html)
+- [Direnv](https://direnv.net/)
 
 ## Quick Start
 
@@ -22,6 +23,12 @@ https://cruft.github.io/cruft/#installation
 ```bash
 cruft create https://github.com/jsdrews/openapi-codegen
 ```
+
+### Install Task
+
+This project uses `task` instead of make. Install it via: https://taskfile.dev/installation
+  
+  **Note:** there is a `Makefile` in the project's root directory. This is only used to check to make sure you have installed everything that is needed for development. However, it will install `task` into a directory in the project root for convenience. For longterm, you will probably want this in a global system location as opposed to local to this project.
 
 ### Run the Web API
 
