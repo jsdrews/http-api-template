@@ -8,6 +8,7 @@ vars:
   SERVER_DIR: src/server
   CLIENTS_DIR: src/clients
   ARTIFACTS_DIR: build
+  SUBTASKS_IMG_NAMESPACE: ${COMPOSE_PROJECT_NAME}-sub-tasks  # Used in generate-server task
 
 includes:
   sub-tasks: sub-tasks
@@ -30,14 +31,14 @@ tasks:
       - |
         docker run --rm \
         -v $PWD:/work \
-        sub-tasks/oapi-codegen \
+        {{ .SUBTASKS_IMG_NAMESPACE }}/oapi-codegen \
         -config /work/{{ .SERVER_DIR }}/api/oapi-codegen-server-cfg.yaml \
         -o /work/{{ .SERVER_DIR }}/api/api.go \
         /work/{{ .API_SPEC }}
       - |
         docker run --rm \
         -v $PWD:/work \
-        sub-tasks/oapi-codegen \
+        {{ .SUBTASKS_IMG_NAMESPACE }}/oapi-codegen \
         -config /work/{{ .SERVER_DIR }}/api/oapi-codegen-types-cfg.yaml \
         -o /work/{{ .SERVER_DIR }}/api/types.go \
         /work/{{ .API_SPEC }}

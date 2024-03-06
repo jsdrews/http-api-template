@@ -13,7 +13,7 @@ This will show all available tasks.
 
 ## Front End Development
 
-Everything is centered around the api spec. Make changes to the api spec to reflect what is needed from the api for the front end. While the backend features are developed, one can use `task mock` to mock the api and develop the front end.
+Everything is centered around the api spec. Make changes to the api spec to reflect what is needed from the api for the front end. While the backend features are being developed, one can use `task mock` to mock the api and develop the front end.
 
 If you need to run the full web api, you can run `task up` which will run the web api at address: `localhost:$API_PORT`.
 

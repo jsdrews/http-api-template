@@ -2,6 +2,10 @@
 
 version: '3'
 
+vars:
+  SUBTASKS_DIR: sub-tasks
+  SUBTASKS_IMG_NAMESPACE: ${COMPOSE_PROJECT_NAME}-sub-tasks
+
 tasks:
 
   _docker_preconditions:
@@ -24,9 +28,9 @@ tasks:
     deps:
       - _docker_preconditions
     cmds:
-      - docker build --tag sub-tasks/datamodel-code-generator sub-tasks/datamodel-code-generator
+      - docker build --tag {{ .SUBTASKS_IMG_NAMESPACE }}/datamodel-code-generator {{ .SUBTASKS_DIR }}/datamodel-code-generator
     status:
-      - test $(docker images sub-tasks/datamodel-code-generator | wc -l) -gt 1
+      - test $(docker images {{ .SUBTASKS_IMG_NAMESPACE }}/datamodel-code-generator | wc -l) -gt 1
 
   build-json-schema-faker:
     desc: Build json-schema-faker
@@ -34,9 +38,9 @@ tasks:
     deps:
       - _docker_preconditions
     cmds:
-      - docker build --tag sub-tasks/json-schema-faker sub-tasks/json-schema-faker
+      - docker build --tag {{ .SUBTASKS_IMG_NAMESPACE }}/json-schema-faker {{ .SUBTASKS_DIR }}/json-schema-faker
     status:
-      - test $(docker images sub-tasks/json-schema-faker | wc -l) -gt 1
+      - test $(docker images {{ .SUBTASKS_IMG_NAMESPACE }}/json-schema-faker | wc -l) -gt 1
 
   build-jq:
     desc: Build jq
@@ -44,9 +48,9 @@ tasks:
     deps:
       - _docker_preconditions
     cmds:
-      - docker build --tag sub-tasks/jq sub-tasks/jq
+      - docker build --tag {{ .SUBTASKS_IMG_NAMESPACE }}/jq {{ .SUBTASKS_DIR }}/jq
     status:
-      - test $(docker images sub-tasks/jq | wc -l) -gt 1
+      - test $(docker images {{ .SUBTASKS_IMG_NAMESPACE }}/jq | wc -l) -gt 1
 
   build-openapi-json-schemextractor:
     desc: Build openapi-json-schemextractor
@@ -54,9 +58,9 @@ tasks:
     deps:
       - _docker_preconditions
     cmds:
-      - docker build --tag sub-tasks/openapi-json-schemextractor sub-tasks/openapi-json-schemextractor
+      - docker build --tag {{ .SUBTASKS_IMG_NAMESPACE }}/openapi-json-schemextractor {{ .SUBTASKS_DIR }}/openapi-json-schemextractor
     status:
-      - test $(docker images sub-tasks/openapi-json-schemextractor | wc -l) -gt 1
+      - test $(docker images {{ .SUBTASKS_IMG_NAMESPACE }}/openapi-json-schemextractor | wc -l) -gt 1
 
   build-oapi-codegen:
     desc: Build oapi-codegen
@@ -64,9 +68,9 @@ tasks:
     deps:
       - _docker_preconditions
     cmds:
-      - docker build --tag sub-tasks/oapi-codegen sub-tasks/oapi-codegen
+      - docker build --tag {{ .SUBTASKS_IMG_NAMESPACE }}/oapi-codegen {{ .SUBTASKS_DIR }}/oapi-codegen
     status:
-      - test $(docker images sub-tasks/oapi-codegen | wc -l) -gt 1
+      - test $(docker images {{ .SUBTASKS_IMG_NAMESPACE }}/oapi-codegen | wc -l) -gt 1
 
   openapi-json-schemextractor:
     desc: Extract schema from api spec
@@ -77,7 +81,7 @@ tasks:
       - |
         docker run --rm -v \
         $PWD/{{ .API_SPEC }}:/{{ .API_SPEC }} \
-        sub-tasks/openapi-json-schemextractor \
+        {{ .SUBTASKS_IMG_NAMESPACE }}/openapi-json-schemextractor \
         {{ .API_SPEC }}
 
   jq:
@@ -89,7 +93,7 @@ tasks:
       - |
         docker run --rm -i \
         -v $PWD/{{ .ARTIFACTS_DIR }}:/{{ .ARTIFACTS_DIR }} \
-        sub-tasks/jq \
+        {{ .SUBTASKS_IMG_NAMESPACE }}/jq \
         {{ .CLI_ARGS }}
 
   datamodel-code-generator:
@@ -101,7 +105,7 @@ tasks:
       - |
         docker run --rm -it \
         -v $PWD/{{ .ARTIFACTS_DIR }}:/{{ .ARTIFACTS_DIR }} \
-        sub-tasks/datamodel-code-generator \
+        {{ .SUBTASKS_IMG_NAMESPACE }}/datamodel-code-generator \
         {{ .CLI_ARGS }}
   
   json-schema-faker:
@@ -113,7 +117,7 @@ tasks:
       - |
         docker run --rm -it \
         -v $PWD/{{ .ARTIFACTS_DIR }}:/{{ .ARTIFACTS_DIR }} \
-        sub-tasks/json-schema-faker \
+        {{ .SUBTASKS_IMG_NAMESPACE }}/json-schema-faker \
         {{ .CLI_ARGS }}
 
   clean-subtasks:
@@ -124,9 +128,9 @@ tasks:
     cmds:
       - |
         docker rmi -f \
-        sub-tasks/datamodel-code-generator \
-        sub-tasks/json-schema-faker \
-        sub-tasks/jq \
-        sub-tasks/openapi-json-schemextractor \
-        sub-tasks/ingest \
-        sub-tasks/oapi-codegen \
+        {{ .SUBTASKS_IMG_NAMESPACE }}/datamodel-code-generator \
+        {{ .SUBTASKS_IMG_NAMESPACE }}/json-schema-faker \
+        {{ .SUBTASKS_IMG_NAMESPACE }}/jq \
+        {{ .SUBTASKS_IMG_NAMESPACE }}/openapi-json-schemextractor \
+        {{ .SUBTASKS_IMG_NAMESPACE }}/ingest \
+        {{ .SUBTASKS_IMG_NAMESPACE }}/oapi-codegen \
