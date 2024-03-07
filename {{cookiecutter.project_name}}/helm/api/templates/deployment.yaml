@@ -22,8 +22,7 @@ spec:
             - name: DB_NAME
               value: {{ .Values.db.name }}
             - name: API_PORT
-              # value: {{ .Values.api.internalPort | toString }}
-              value: "8888"
+              value: "{{ .Values.api.internalPort | toString }}"
             - name: DB_ROOT_USERNAME
               valueFrom: 
                 secretKeyRef:
