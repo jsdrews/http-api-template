@@ -4,11 +4,10 @@
 # Anytime you enter this project, these env vars will be set
 # When you leave the root directory for a parent directory, it will unset the env vars
 
-export COMPOSE_PROJECT_NAME={{ cookiecutter.project_name }}
+export COMPOSE_PROJECT_NAME=testing
 export IMAGE_REGISTRY_URL=$IMAGE_REGISTRY_URL
 export PERSONAL_ACCESS_TOKEN_USERNAME=$USER
 export PERSONAL_ACCESS_TOKEN=$PERSONAL_ACCESS_TOKEN
-export MK_PRIVATE_REGISTRY_AUTH="<add key here>"
 
 export DB_URI="mongodb://db-host:27017"
 export DB_ROOT_USERNAME=root

@@ -1,0 +1,16 @@
+name: mongo-community
+version: "4.2.6"
+username: mongo
+password: password123
+database: admin
+roles: false
+replicas: 3
+persistenceType: local
+compressionType: zstd
+persistence:
+  data:
+    storage: 20Gi
+    storageClass: standard
+  logs:
+    storage: 2Gi
+    storageClass: standard

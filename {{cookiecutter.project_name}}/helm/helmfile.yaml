@@ -1,19 +1,16 @@
 repositories:
   - name: mongodb
-    url: https://mongodb.github.io/helm-charts
-  - name: percona
-    url: https://percona.github.io/percona-helm-charts/  
+    url: https://mongodb.github.io/helm-charts 
 
 releases:
-  - name: api-db
+
+  - name: db
     namespace: apps
     createNamespace: true
-    chart: ./api-db
+    chart: ./db/mongo-community-helm/mongo-community
     version: 1.3.10
     wait: true
     waitForJobs: true
-    needs:
-      - private-registry-secrets
     set:
       - name: username
         value: {{ requiredEnv "DB_ROOT_USERNAME" }}
@@ -32,10 +29,14 @@ releases:
   - name: api
     namespace: apps
     createNamespace: true
-    chart: ./api-chart
+    chart: ./api
+    # wait: true
+    # waitForJobs: true
     needs:
-      - api-db
+      - db
     set:
+      - name: image.name
+        value: {{ requiredEnv "IMAGE_REGISTRY_URL" }}/{{ requiredEnv "COMPOSE_PROJECT_NAME" }}
       - name: api.devMode
         value: {{ requiredEnv "API_DEV_MODE" }}
       - name: api.port

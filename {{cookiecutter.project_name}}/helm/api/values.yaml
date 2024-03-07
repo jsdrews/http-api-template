@@ -1,0 +1,32 @@
+image:
+  name: placeholder
+  pullPolicy: IfNotPresent
+
+api:
+  devMode: false
+  replicas: 1
+  externalPort: 9991
+  internalPort: 8888
+  ginMode: release
+
+db:
+  name: placeholder
+  uri: mongodb+srv://mongo-community-svc.apps.svc.cluster.local/?tls=false&ssl=false
+  auth:
+    authSource: admin
+    rootUser: root
+    rootPassword: password
+  initContainer:
+    wait_for_it_mongo:
+      image: jsdrews/wait-for-it-mongo:1.0.0
+
+ingress:
+  className: nginx
+  hosts:
+    - host: kubernetes.docker.internal
+      paths:
+        - path: /api
+          pathType: Prefix
+          port: 9991
+  annotations: {}
+  tls: []

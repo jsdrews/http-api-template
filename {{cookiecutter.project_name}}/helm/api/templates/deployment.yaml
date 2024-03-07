@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "api.fullname" . }}
+spec:
+  replicas: {{ .Values.api.replicas }}
+  selector:
+    matchLabels:
+      app: {{ template "api.fullname" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "api.fullname" . }}
+    spec:
+      imagePullSecrets:
+        - name: gitlab
+      containers:
+        - name: {{ template "api.fullname" . }}
+          image: {{ .Values.image.name }}:{{ .Chart.AppVersion }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: DB_URI
+              value: {{ .Values.db.uri }}
+            - name: DB_NAME
+              value: {{ .Values.db.name }}
+            - name: DB_ROOT_USERNAME
+              valueFrom: 
+                secretKeyRef:
+                  name: {{ template "api.fullname" . }}-db-credentials
+                  key: root_username
+            - name: DB_ROOT_PASSWORD
+              valueFrom: 
+                secretKeyRef:
+                  name: {{ template "api.fullname" . }}-db-credentials
+                  key: root_password
+            {{ if .Values.api.devMode }}
+            - name: API_DEV_MODE
+              value: "true"
+            {{ end }}
+            - name: GIN_MODE
+              value: {{ .Values.api.ginMode }}
+      initContainers:
+        - name: wait-for-mongo
+          image: {{ .Values.db.initContainer.wait_for_it_mongo.image }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["wait-for-it-mongo"]
+          args: ["--timeout", "300"]
+          env:
+            - name: DB_URI
+              value: {{ .Values.db.uri }}
+            - name: DB_NAME
+              value: {{ .Values.db.name }}
+            - name: DB_ROOT_USERNAME
+              valueFrom: 
+                secretKeyRef:
+                  name: {{ template "api.fullname" . }}-db-credentials
+                  key: root_username
+            - name: DB_ROOT_PASSWORD
+              valueFrom: 
+                secretKeyRef:
+                  name: {{ template "api.fullname" . }}-db-credentials
+                  key: root_password
+        - name: mongo-migrate
+          image: {{ .Values.image.name }}-mongo-migrations:{{ .Chart.AppVersion }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: DB_URI
+              value: {{ .Values.db.uri }}
+            - name: DB_NAME
+              value: {{ .Values.db.name }}
+            - name: DB_ROOT_USERNAME
+              valueFrom: 
+                secretKeyRef:
+                  name: {{ template "api.fullname" . }}-db-credentials
+                  key: root_username
+            - name: DB_ROOT_PASSWORD
+              valueFrom: 
+                secretKeyRef:
+                  name: {{ template "api.fullname" . }}-db-credentials
+                  key: root_password

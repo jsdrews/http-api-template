@@ -1,0 +1,29 @@
+suite: test deployment
+templates:
+  - mongo.yaml
+tests:
+  - it: should work
+    set:
+      name: mongodb
+    asserts:
+      - isKind:
+          of: MongoDBCommunity
+
+  - it: persists single
+    set:
+      persistenceType: single
+      persistence.single.storage: 8Gi
+    asserts:
+      - equal:
+          path: spec.podSpec.persistence.single.storage
+          value: 8Gi
+
+  - it: persists multiple
+    set:
+      persistenceType: multiple
+      persistence.data.storage: 8Gi
+    asserts:
+      - equal:
+          path: spec.podSpec.persistence.multiple.data.storage
+          value: 8Gi
+
