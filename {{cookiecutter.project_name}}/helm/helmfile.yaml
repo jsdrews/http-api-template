@@ -12,14 +12,14 @@ releases:
     wait: true
     waitForJobs: true
     set:
+      - name: replicas
+        value: 1
       - name: username
         value: {{ requiredEnv "DB_ROOT_USERNAME" }}
       - name: password
         value: {{ requiredEnv "DB_ROOT_PASSWORD" }}
       - name: database
         value: admin
-      - name: replicas
-        value: 1
       - name: persistenceType
         value: local
       - name: compressionType
@@ -35,6 +35,8 @@ releases:
     needs:
       - db
     set:
+      - name: api.replicas
+        value: 1
       - name: image.name
         value: {{ requiredEnv "IMAGE_REGISTRY_URL" }}/{{ requiredEnv "COMPOSE_PROJECT_NAME" }}
       - name: api.devMode
