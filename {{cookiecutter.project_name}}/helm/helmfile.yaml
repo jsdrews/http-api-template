@@ -39,7 +39,9 @@ releases:
         value: {{ requiredEnv "IMAGE_REGISTRY_URL" }}/{{ requiredEnv "COMPOSE_PROJECT_NAME" }}
       - name: api.devMode
         value: {{ requiredEnv "API_DEV_MODE" }}
-      - name: api.port
+      - name: api.ginMode
+        value: {{ requiredEnv "GIN_MODE" }}
+      - name: api.internalPort
         value: {{ requiredEnv "API_PORT" }}
       - name: db.name
         value: {{ requiredEnv "DB_NAME" }}

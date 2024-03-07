@@ -12,8 +12,6 @@ spec:
       labels:
         app: {{ template "api.fullname" . }}
     spec:
-      imagePullSecrets:
-        - name: gitlab
       containers:
         - name: {{ template "api.fullname" . }}
           image: {{ .Values.image.name }}:{{ .Chart.AppVersion }}
@@ -23,6 +21,9 @@ spec:
               value: {{ .Values.db.uri }}
             - name: DB_NAME
               value: {{ .Values.db.name }}
+            - name: API_PORT
+              # value: {{ .Values.api.internalPort | toString }}
+              value: "8888"
             - name: DB_ROOT_USERNAME
               valueFrom: 
                 secretKeyRef:
