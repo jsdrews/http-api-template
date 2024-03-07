@@ -4,7 +4,7 @@
 # Anytime you enter this project, these env vars will be set
 # When you leave the root directory for a parent directory, it will unset the env vars
 
-export COMPOSE_PROJECT_NAME=testing
+export COMPOSE_PROJECT_NAME={{cookiecutter.project_name}}
 export IMAGE_REGISTRY_URL=$IMAGE_REGISTRY_URL
 export PERSONAL_ACCESS_TOKEN_USERNAME=$USER
 export PERSONAL_ACCESS_TOKEN=$PERSONAL_ACCESS_TOKEN
