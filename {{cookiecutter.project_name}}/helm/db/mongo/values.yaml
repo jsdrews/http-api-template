@@ -7,6 +7,10 @@ roles: false
 replicas: 3
 persistenceType: local
 compressionType: zstd
+memoryMin: 4000M
+memoryMax: 4000M
+cpuMin: 4000m
+cpuMax: 4000m
 persistence:
   data:
     storage: 20Gi

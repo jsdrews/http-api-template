@@ -7,11 +7,13 @@ releases:
   - name: db
     namespace: apps
     createNamespace: true
-    chart: ./db/mongo-community-helm/mongo-community
+    chart: ./db/mongo
     version: 1.3.10
     wait: true
     waitForJobs: true
     set:
+      - name: version
+        value: "4.2.6"
       - name: replicas
         value: 1
       - name: username
@@ -24,14 +26,20 @@ releases:
         value: local
       - name: compressionType
         value: zstd
+      - name: memoryMin
+        value: 2000M
+      - name: memoryMax
+        value: 2000M
+      - name: cpuMin
+        value: 2000m
+      - name: cpuMax
+        value: 2000m
     installed: true
 
   - name: api
     namespace: apps
     createNamespace: true
     chart: ./api
-    # wait: true
-    # waitForJobs: true
     needs:
       - db
     set:

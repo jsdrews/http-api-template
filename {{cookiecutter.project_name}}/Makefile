@@ -3,6 +3,7 @@ GREEN:=\033[1;32m
 NC:=\033[0m
 
 bootstrap:
+	cp .envrc.template .envrc
 ifneq ("$(shell which task > /dev/null && echo 0)","0")
 	@curl --location https://taskfile.dev/install.sh | sh -s -- -d
 	@printf "${GREEN}task is installed: ./bin/task${NC}\n"
