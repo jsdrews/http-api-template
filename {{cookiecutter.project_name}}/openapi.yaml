@@ -29,7 +29,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ServerError'
+                $ref: '#/components/schemas/GenericServerError'
   /health:
     get:
       tags:
@@ -48,13 +48,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ServerError'
+                $ref: '#/components/schemas/GenericServerError'
         '500':
           description: Internal Server Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ServerError'
+                $ref: '#/components/schemas/GenericServerError'
 components:
   securitySchemes:
     bearerAuth:
@@ -87,7 +87,7 @@ components:
         status:
           type: string
           example: OK
-    ServerError:
+    GenericServerError:
       type: object
       required:
         - error
