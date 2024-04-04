@@ -50,7 +50,7 @@ tasks:
       - gen-client
       - genc
     deps:
-      - sub-tasks:sub-tasks:_docker_preconditions
+      - sub-tasks:_docker_preconditions
     cmds:
       - |
         {{ if .CLI_ARGS }}
