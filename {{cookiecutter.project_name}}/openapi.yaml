@@ -1,6 +1,5 @@
 openapi: 3.0.0
 info:
-  # title: Openapi-codegen
   title: {{ cookiecutter.project_name }}
   version: 1.0.0
 servers:
@@ -23,7 +22,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VersionCheck'
+                $ref: '#/components/schemas/APIVersionResponse'
         '500':
           description: Internal Server Error
           content:
@@ -71,7 +70,7 @@ components:
             read: Grants read access
             write: Grants write access
   schemas:
-    VersionCheck:
+    APIVersionResponse:
       type: object
       required:
         - version

@@ -2,135 +2,133 @@
 
 version: '3'
 
+includes:
+  builds:
+    taskfile: ./builds.yaml
+
 vars:
-  SUBTASKS_DIR: sub-tasks
   SUBTASKS_IMG_NAMESPACE: ${COMPOSE_PROJECT_NAME}-sub-tasks
 
 tasks:
 
-  _docker_preconditions:
-    desc: "Checks for required programs"
-    preconditions:
-      - sh: command -v docker
-        msg: docker needed to run these tasks
-      - sh: command -v docker-compose
-        msg: docker-compose needed to run these tasks
-      - sh: command -v helm
-        msg: helm is needed to run these tasks
-      - sh: grep registry.gitlab.com $HOME/.docker/config.json
-        msg: docker login to registry.gitlab.com needed to run these tasks. (docker login registry.gitlab.com -u <username> -p <personal gitlab token>)
+  openapi-generator-cli:
+    desc: openapi-generator-cli
+    deps:
+      - builds:build-openapi-generator-cli
     silent: true
-    internal: true
-
-  build-datamodel-code-generator:
-    desc: Build datamodel-code-generator
-    internal: true
-    deps:
-      - _docker_preconditions
     cmds:
-      - docker build --tag {{ .SUBTASKS_IMG_NAMESPACE }}/datamodel-code-generator {{ .SUBTASKS_DIR }}/datamodel-code-generator
-    status:
-      - test $(docker images {{ .SUBTASKS_IMG_NAMESPACE }}/datamodel-code-generator | wc -l) -gt 1
+      - |
+        docker run --rm -it \
+        -v $PWD:/home \
+        -w /home \
+        {{ .SUBTASKS_IMG_NAMESPACE }}/openapi-generator-cli \
+        {{ .CLI_ARGS }}
 
-  build-json-schema-faker:
-    desc: Build json-schema-faker
-    internal: true
+  oapi-codegen:
     deps:
-      - _docker_preconditions
+      - builds:build-oapi-codegen
     cmds:
-      - docker build --tag {{ .SUBTASKS_IMG_NAMESPACE }}/json-schema-faker {{ .SUBTASKS_DIR }}/json-schema-faker
-    status:
-      - test $(docker images {{ .SUBTASKS_IMG_NAMESPACE }}/json-schema-faker | wc -l) -gt 1
-
-  build-jq:
-    desc: Build jq
-    internal: true
-    deps:
-      - _docker_preconditions
-    cmds:
-      - docker build --tag {{ .SUBTASKS_IMG_NAMESPACE }}/jq {{ .SUBTASKS_DIR }}/jq
-    status:
-      - test $(docker images {{ .SUBTASKS_IMG_NAMESPACE }}/jq | wc -l) -gt 1
-
-  build-openapi-json-schemextractor:
-    desc: Build openapi-json-schemextractor
-    internal: true
-    deps:
-      - _docker_preconditions
-    cmds:
-      - docker build --tag {{ .SUBTASKS_IMG_NAMESPACE }}/openapi-json-schemextractor {{ .SUBTASKS_DIR }}/openapi-json-schemextractor
-    status:
-      - test $(docker images {{ .SUBTASKS_IMG_NAMESPACE }}/openapi-json-schemextractor | wc -l) -gt 1
-
-  build-oapi-codegen:
-    desc: Build oapi-codegen
-    internal: true
-    deps:
-      - _docker_preconditions
-    cmds:
-      - docker build --tag {{ .SUBTASKS_IMG_NAMESPACE }}/oapi-codegen {{ .SUBTASKS_DIR }}/oapi-codegen
-    status:
-      - test $(docker images {{ .SUBTASKS_IMG_NAMESPACE }}/oapi-codegen | wc -l) -gt 1
+      - |
+        docker run --rm \
+        -v $PWD:/home \
+        -w /home \
+        {{ .SUBTASKS_IMG_NAMESPACE }}/oapi-codegen \
+        {{ .CLI_ARGS }}
+    desc: Run oapi-codegen
+    silent: true
 
   openapi-json-schemextractor:
     desc: Extract schema from api spec
     deps:
-      - build-openapi-json-schemextractor
+      - builds:build-openapi-json-schemextractor
     silent: true
     cmds:
       - |
-        docker run --rm -v \
-        $PWD/{{ .API_SPEC }}:/{{ .API_SPEC }} \
+        docker run --rm \
+        -v $PWD:/home \
+        -w /home \
         {{ .SUBTASKS_IMG_NAMESPACE }}/openapi-json-schemextractor \
-        {{ .API_SPEC }}
+        {{ .CLI_ARGS }}
+
+  redocly:
+    desc: redocly-cli for openapi manipulation
+    deps:
+      - builds:build-redocly
+    silent: true
+    cmds:
+      - |
+        docker run --rm \
+        -v $PWD:/home \
+        -w /home \
+        {{ .SUBTASKS_IMG_NAMESPACE }}/redocly \
+        {{ .CLI_ARGS }}
 
   jq:
     desc: "Run jq on api spec"
     deps:
-      - build-jq
+      - builds:build-jq
     silent: true
     cmds:
       - |
         docker run --rm -i \
-        -v $PWD/{{ .ARTIFACTS_DIR }}:/{{ .ARTIFACTS_DIR }} \
+        -v $PWD:/home \
+        -w /home \
         {{ .SUBTASKS_IMG_NAMESPACE }}/jq \
         {{ .CLI_ARGS }}
 
   datamodel-code-generator:
     desc: "Generate pydantic models from api spec"
     deps:
-      - build-datamodel-code-generator
+      - builds:build-datamodel-code-generator
     silent: true
     cmds:
       - |
         docker run --rm -it \
-        -v $PWD/{{ .ARTIFACTS_DIR }}:/{{ .ARTIFACTS_DIR }} \
+        -v $PWD:/home \
+        -w /home \
         {{ .SUBTASKS_IMG_NAMESPACE }}/datamodel-code-generator \
         {{ .CLI_ARGS }}
   
   json-schema-faker:
     desc: "Generate fake data from api spec"
     deps:
-      - build-json-schema-faker
+      - builds:build-json-schema-faker
     silent: true
     cmds:
       - |
         docker run --rm -it \
-        -v $PWD/{{ .ARTIFACTS_DIR }}:/{{ .ARTIFACTS_DIR }} \
+        -v $PWD:/home \
+        -w /home \
         {{ .SUBTASKS_IMG_NAMESPACE }}/json-schema-faker \
         {{ .CLI_ARGS }}
+
+  jsonsubschema:
+    desc: "Check if a jsonschema definition is compatible with another"
+    deps:
+      - builds:build-jsonsubschema
+    silent: true
+    cmds:
+      - |
+        docker run --rm -it \
+        -v $PWD:/home \
+        -w /home \
+        {{ .SUBTASKS_IMG_NAMESPACE }}/jsonsubschema \
+        {{ .CLI_ARGS }}
+
+  imgs:
+    deps:
+      - sub-tasks:builds:_docker_preconditions
+    cmds:
+      - docker images "{{ .SUBTASKS_IMG_NAMESPACE }}/*"
+    desc: "Show all images"
+    silent: true
 
   clean-subtasks:
     desc: "Remove all images"
     deps:
-      - _docker_preconditions
+      - builds:_docker_preconditions
     silent: true
     cmds:
       - |
         docker rmi -f \
-        {{ .SUBTASKS_IMG_NAMESPACE }}/datamodel-code-generator \
-        {{ .SUBTASKS_IMG_NAMESPACE }}/json-schema-faker \
-        {{ .SUBTASKS_IMG_NAMESPACE }}/jq \
-        {{ .SUBTASKS_IMG_NAMESPACE }}/openapi-json-schemextractor \
-        {{ .SUBTASKS_IMG_NAMESPACE }}/ingest \
-        {{ .SUBTASKS_IMG_NAMESPACE }}/oapi-codegen \
+        $(docker images "{{ .SUBTASKS_IMG_NAMESPACE }}/*" -q)

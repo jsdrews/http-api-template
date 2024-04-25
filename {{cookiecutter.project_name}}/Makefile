@@ -21,11 +21,6 @@ ifneq ("$(shell which docker > /dev/null && echo 0)","0")
 else
 	@printf "${GREEN}docker is installed${NC}\n"
 endif
-ifneq ("$(shell which docker-compose > /dev/null && echo 0)","0")
-	@printf "${RED}You will need to install docker-compose\n"
-else
-	@printf "${GREEN}docker-compose is installed${NC}\n"
-endif
 ifneq ("$(shell which helm > /dev/null && echo 0)","0")
 	@printf "${RED}You will need to install helm: https://helm.sh/docs/intro/install/\n"
 else

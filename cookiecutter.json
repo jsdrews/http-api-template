@@ -2,6 +2,7 @@
     "project_name": "openapi-codegen",
     "_copy_without_render": [
         "*Taskfile*",
-        "helm/*"
+        "helm/*",
+        "sub-tasks/*"
     ]
 }

@@ -1,0 +1,97 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  SUBTASKS_IMG_NAMESPACE: ${COMPOSE_PROJECT_NAME}-sub-tasks
+
+tasks:
+
+  _docker_preconditions:
+    desc: "Checks for required programs"
+    preconditions:
+      - sh: command -v docker
+        msg: docker needed to run these tasks
+      - sh: command -v helm
+        msg: helm is needed to run these tasks
+    internal: true
+
+  build-openapi-generator-cli:
+    desc: Build openapi-generator-cli
+    internal: true
+    deps:
+      - _docker_preconditions
+    cmds:
+      - docker build --tag {{ .SUBTASKS_IMG_NAMESPACE }}/openapi-generator-cli openapi-generator-cli
+    status:
+      - test $(docker images {{ .SUBTASKS_IMG_NAMESPACE }}/openapi-generator-cli | wc -l) -gt 1
+
+  build-datamodel-code-generator:
+    desc: Build datamodel-code-generator
+    internal: true
+    deps:
+      - _docker_preconditions
+    cmds:
+      - docker build --tag {{ .SUBTASKS_IMG_NAMESPACE }}/datamodel-code-generator datamodel-code-generator
+    status:
+      - test $(docker images {{ .SUBTASKS_IMG_NAMESPACE }}/datamodel-code-generator | wc -l) -gt 1
+
+  build-jsonsubschema:
+    desc: Build jsonsubschema
+    internal: true
+    deps:
+      - _docker_preconditions
+    cmds:
+      - docker build --tag {{ .SUBTASKS_IMG_NAMESPACE }}/jsonsubschema jsonsubschema
+    status:
+      - test $(docker images {{ .SUBTASKS_IMG_NAMESPACE }}/jsonsubschema | wc -l) -gt 1
+
+  build-json-schema-faker:
+    desc: Build json-schema-faker
+    internal: true
+    deps:
+      - _docker_preconditions
+    cmds:
+      - docker build --tag {{ .SUBTASKS_IMG_NAMESPACE }}/json-schema-faker json-schema-faker
+    status:
+      - test $(docker images {{ .SUBTASKS_IMG_NAMESPACE }}/json-schema-faker | wc -l) -gt 1
+
+  build-jq:
+    desc: Build jq
+    internal: true
+    deps:
+      - _docker_preconditions
+    cmds:
+      - docker build --tag {{ .SUBTASKS_IMG_NAMESPACE }}/jq jq
+    status:
+      - test $(docker images {{ .SUBTASKS_IMG_NAMESPACE }}/jq | wc -l) -gt 1
+
+  build-openapi-json-schemextractor:
+    desc: Build openapi-json-schemextractor
+    internal: true
+    deps:
+      - _docker_preconditions
+    cmds:
+      - docker build --tag {{ .SUBTASKS_IMG_NAMESPACE }}/openapi-json-schemextractor openapi-json-schemextractor
+    status:
+      - test $(docker images {{ .SUBTASKS_IMG_NAMESPACE }}/openapi-json-schemextractor | wc -l) -gt 1
+
+  build-oapi-codegen:
+    desc: Build oapi-codegen
+    internal: true
+    deps:
+      - _docker_preconditions
+    cmds:
+      - docker build --tag {{ .SUBTASKS_IMG_NAMESPACE }}/oapi-codegen oapi-codegen
+    status:
+      - test $(docker images {{ .SUBTASKS_IMG_NAMESPACE }}/oapi-codegen | wc -l) -gt 1
+  
+  build-redocly:
+    desc: Build redocly
+    internal: true
+    deps:
+      - _docker_preconditions
+    cmds:
+      - docker build --tag {{ .SUBTASKS_IMG_NAMESPACE }}/redocly redocly
+    status:
+      - test $(docker images {{ .SUBTASKS_IMG_NAMESPACE }}/redocly | wc -l) -gt 1

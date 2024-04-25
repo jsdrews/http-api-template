@@ -1,0 +1,12 @@
+type: object
+title: User
+properties:
+  firstName:
+    type: string
+    example: John
+  lastName:
+    type: string
+    example: Doe
+  email:
+    type: string
+    example: j.d@domain.com

@@ -8,7 +8,6 @@ vars:
   SERVER_DIR: src/server
   CLIENTS_DIR: src/clients
   ARTIFACTS_DIR: build
-  SUBTASKS_IMG_NAMESPACE: ${COMPOSE_PROJECT_NAME}-sub-tasks  # Used in generate-server task
 
 includes:
   sub-tasks: sub-tasks
@@ -16,6 +15,8 @@ includes:
 
 tasks:
   default:
+    deps:
+      - sub-tasks:builds:_docker_preconditions
     cmds:
       - task -a
     desc: "List all tasks"
@@ -25,23 +26,17 @@ tasks:
     aliases:
       - gen-server
       - gen
-    deps:
-      - sub-tasks:build-oapi-codegen
     cmds:
       - |
-        docker run --rm \
-        -v $PWD:/work \
-        {{ .SUBTASKS_IMG_NAMESPACE }}/oapi-codegen \
-        -config /work/{{ .SERVER_DIR }}/api/oapi-codegen-server-cfg.yaml \
-        -o /work/{{ .SERVER_DIR }}/api/api.go \
-        /work/{{ .API_SPEC }}
+        task sub-tasks:oapi-codegen -- \
+        -config {{ .SERVER_DIR }}/api/oapi-codegen-server-cfg.yaml \
+        -o {{ .SERVER_DIR }}/api/api.go \
+        {{ .API_SPEC }}
       - |
-        docker run --rm \
-        -v $PWD:/work \
-        {{ .SUBTASKS_IMG_NAMESPACE }}/oapi-codegen \
-        -config /work/{{ .SERVER_DIR }}/api/oapi-codegen-types-cfg.yaml \
-        -o /work/{{ .SERVER_DIR }}/api/types.go \
-        /work/{{ .API_SPEC }}
+        task sub-tasks:oapi-codegen -- \
+        -config {{ .SERVER_DIR }}/api/oapi-codegen-types-cfg.yaml \
+        -o {{ .SERVER_DIR }}/api/types.go \
+        {{ .API_SPEC }}
     desc: "Generate code from openapi spec"
     silent: true
   
@@ -49,26 +44,21 @@ tasks:
     aliases:
       - gen-client
       - genc
-    deps:
-      - sub-tasks:_docker_preconditions
     cmds:
       - |
         {{ if .CLI_ARGS }}
 
-        docker run --rm \
-        -v $PWD/{{ .API_SPEC }}:/openapi.yaml \
-        -v $PWD/{{ .CLIENTS_DIR }}/{{ .CLI_ARGS }}:/generated \
-        openapitools/openapi-generator-cli generate \
-        -i /openapi.yaml \
+        task sub-tasks:openapi-generator-cli -- generate \
+        -i {{ .API_SPEC }} \
         -g {{ .CLI_ARGS }} \
-        -o /generated
+        -o {{ .CLIENTS_DIR }}/{{ .CLI_ARGS }}
 
         echo
         echo "Generated client code at {{ .CLIENTS_DIR }}/{{ .CLI_ARGS }}"
 
         {{ else }}
 
-        docker run --rm openapitools/openapi-generator-cli list
+        task sub-tasks:openapi-generator-cli -- list
         echo "Please specify client name from the above list"
 
         {{ end }}
@@ -77,7 +67,7 @@ tasks:
 
   build:
     deps:
-      - sub-tasks:_docker_preconditions
+      - sub-tasks:builds:_docker_preconditions
       - generate-server
     cmds:
       - |
@@ -107,7 +97,7 @@ tasks:
 
   build-helm:
     deps:
-      - sub-tasks:_docker_preconditions
+      - sub-tasks:builds:_docker_preconditions
     cmds:
       - |
         helm dep update ./helm/$COMPOSE_PROJECT_NAME
@@ -142,15 +132,15 @@ tasks:
 
   imgs:
     deps:
-      - sub-tasks:_docker_preconditions
+      - sub-tasks:builds:_docker_preconditions
     cmds:
-      - docker images | grep $COMPOSE_PROJECT_NAME
+      - docker images "${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}"
     desc: "Show all images"
     silent: true
 
   rmi:
     deps:
-      - sub-tasks:_docker_preconditions
+      - sub-tasks:builds:_docker_preconditions
     cmds:
       - docker rmi ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:{{ .VERSION }}
       - docker rmi ${IMAGE_REGISTRY_URL}/${COMPOSE_PROJECT_NAME}:latest
@@ -166,7 +156,7 @@ tasks:
     deps:
       - build
     cmds:
-      - docker-compose up -d
+      - docker compose up -d
       - |
         # Wait for the server to start
         COUNTER=0
@@ -187,27 +177,27 @@ tasks:
       - echo mock server is running at http://localhost:$MOCKSERVER_PORT
     desc: "Bring up all services"
     status:
-      - test $(docker-compose ps -q api)
+      - test $(docker compose ps -q api)
     silent: true
 
   down:
     deps:
-      - sub-tasks:_docker_preconditions
+      - sub-tasks:builds:_docker_preconditions
     cmds:
-      - docker-compose down
+      - docker compose down
     desc: "Bring down all services"
     silent: true
 
   restart:
     deps:
       - generate-server
-      - sub-tasks:_docker_preconditions
+      - sub-tasks:builds:_docker_preconditions
     cmds:
       - |
         {{ if .CLI_ARGS }}
-          docker-compose restart {{ .CLI_ARGS }}
+          docker compose restart {{ .CLI_ARGS }}
         {{ else }}
-          docker-compose restart api
+          docker compose restart api
         {{ end }}
     aliases:
       - r
@@ -217,31 +207,31 @@ tasks:
 
   ps:
     deps:
-      - sub-tasks:_docker_preconditions
+      - sub-tasks:builds:_docker_preconditions
     cmds:
-      - docker-compose ps
+      - docker compose ps
     desc: "Show all services"
     silent: true
 
   logs:
     deps:
-      - sub-tasks:_docker_preconditions
+      - sub-tasks:builds:_docker_preconditions
     cmds:
       - |
         {{ if .CLI_ARGS }}
-          docker-compose logs -f {{ .CLI_ARGS }}
+          docker compose logs -f {{ .CLI_ARGS }}
         {{ else }}
-          docker-compose logs -f api
+          docker compose logs -f api
         {{ end }}
     desc: "Show api service logs"
     silent: true
 
   db:
     deps:
-      - sub-tasks:_docker_preconditions
+      - sub-tasks:builds:_docker_preconditions
     cmds:
       - |
-        docker-compose exec -it db \
+        docker compose exec -it db \
         mongosh \
         mongodb://localhost:27017/${DB_NAME} \
         --authenticationDatabase=admin \
@@ -251,7 +241,7 @@ tasks:
 
   db-remote:
     deps:
-      - sub-tasks:_docker_preconditions
+      - sub-tasks:builds:_docker_preconditions
     cmds:
       - |
         docker run \
@@ -266,22 +256,22 @@ tasks:
 
   purge:
     deps:
-      - sub-tasks:_docker_preconditions
+      - sub-tasks:builds:_docker_preconditions
     cmds:
-      - docker-compose down -v --rmi local
+      - docker compose down -v --rmi local
       - task: rmi
     aliases:
       - rm
     desc: "Bring down all services and remove volumes and images"
     status:
-      - test $(docker-compose ps -q | wc -l) -eq 0
+      - test $(docker compose ps -q | wc -l) -eq 0
     silent: true
 
   mock:
     deps:
-      - sub-tasks:_docker_preconditions
+      - sub-tasks:builds:_docker_preconditions
     cmds:
-      - docker-compose up -d mockserver
+      - docker compose up -d mockserver
       - echo
       - echo "Mock server is running at http://localhost:${MOCKSERVER_PORT}"
     desc: "Run mock server"
@@ -289,7 +279,7 @@ tasks:
 
   edit:
     deps:
-      - sub-tasks:_docker_preconditions
+      - sub-tasks:builds:_docker_preconditions
     cmds:
       - docker compose up -d swagger-editor
       - echo
@@ -309,37 +299,3 @@ tasks:
       # - go test -v ./...
     desc: "Run api tests"
     silent: true
-
-  extract-schema:
-    desc: "Extract json schema from openapi spec"
-    silent: true
-    cmds:
-      - mkdir -p {{ .ARTIFACTS_DIR }}
-      - |
-        task sub-tasks:openapi-json-schemextractor -- > {{ .ARTIFACTS_DIR }}/api-jsonschema.json
-      - |
-        cat {{ .ARTIFACTS_DIR }}/api-jsonschema.json | \
-        task sub-tasks:jq -- '.{{ .CLI_ARGS }} + { title: "{{ .CLI_ARGS }}" }' \
-        > {{ .ARTIFACTS_DIR }}/{{ .CLI_ARGS }}.json
-        echo
-        echo {{ .ARTIFACTS_DIR }}/{{ .CLI_ARGS }}.json generated
-    preconditions:
-      - sh: test {{ .CLI_ARGS }}
-        msg: Please specify the element name
-
-  extract-pydantic:
-    desc: "Extract pydantic model from json schema"
-    silent: true
-    deps:
-      - extract-schema
-    cmds:
-      - |
-        task sub-tasks:datamodel-code-generator -- \
-        --input-file-type jsonschema \
-        --input {{ .ARTIFACTS_DIR }}/{{ .CLI_ARGS }}.json \
-        --output {{ .ARTIFACTS_DIR }}/{{ .CLI_ARGS }}.py
-        echo
-        echo {{ .ARTIFACTS_DIR }}/{{ .CLI_ARGS }}.py generated
-    preconditions:
-      - sh: test {{ .CLI_ARGS }}
-        msg: Please specify the element name
