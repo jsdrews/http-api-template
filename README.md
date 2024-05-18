@@ -21,7 +21,7 @@ https://cruft.github.io/cruft/#installation
 #### Create a New Project
 
 ```bash
-cruft create https://github.com/jsdrews/openapi-codegen
+cruft create https://github.com/jsdrews/http-api-template
 ```
 
 ### Install Task

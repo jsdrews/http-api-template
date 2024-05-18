@@ -1,5 +1,5 @@
 {
-    "project_name": "openapi-codegen",
+    "project_name": "http-api-example",
     "_copy_without_render": [
         "*Taskfile*",
         "helm/*",
